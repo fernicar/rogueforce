@@ -9,12 +9,13 @@ from status import *
 
 import concepts
 
-# Import libtcod compatibility layer
+# Import pygame rendering system directly
 try:
-    import libtcod_compat as libtcod
-    LIBTCOD_AVAILABLE = True
+    import pygame
+    from libtcod_compat import Console
+    PYGAME_AVAILABLE = True
 except ImportError:
-    LIBTCOD_AVAILABLE = False
+    PYGAME_AVAILABLE = False
 
 # Import color utilities for compatibility
 try:
