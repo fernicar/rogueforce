@@ -12,11 +12,18 @@ import libtcodpy as libtcod
 
 import math
 
-class General(Minion):
+
+from entity_sprite_mixin import SpriteEntityMixin
+
+class General(Minion, SpriteEntityMixin):
   def __init__(self, battleground, side, x=-1, y=-1, name="General", color=concepts.FACTION_LEADER):
     super(General, self).__init__(battleground, side, x, y, name, name[0], color)
     self.max_hp = 300
     self.cost = 250
+
+    # Initialize sprite system (each general subclass should set character_name)
+    self.character_name = name.lower()
+    self.init_sprite_system(self.character_name)
     self.death_quote = "..."
     self.flag = None
     self.formation = Rows(self)

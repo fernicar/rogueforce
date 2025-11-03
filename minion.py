@@ -8,7 +8,11 @@ import tactic
 
 from collections import defaultdict
 
-class Minion(Entity):
+from audio_manager import audio_manager
+from entity_sprite_mixin import SpriteEntityMixin
+from config import SPRITE_SCALE_MINION
+
+class Minion(Entity, SpriteEntityMixin):
   def __init__(self, battleground, side, x=-1, y=-1, name="minion", char='m', color=concepts.ENTITY_DEFAULT):
     super(Minion, self).__init__(battleground, side, x, y, char, color)
     self.name = name
@@ -18,6 +22,18 @@ class Minion(Entity):
     self.power = 5
     self.tactic = tactic.null
     self.attack_effect = effect.TempEffect(self.bg, char='/' if side else '\\')
+
+    # Initialize sprite system for minions
+    # Minions use their general's sprite with hue shift and 0.8 scale
+    if hasattr(battleground, 'generals') and side < len(battleground.generals):
+        general = battleground.generals[side]
+        if hasattr(general, 'character_name'):
+            # Use general's sprite with hue shift for variation
+            self.init_sprite_system(
+                general.character_name,
+                scale=SPRITE_SCALE_MINION,
+                hue_shift=20  # Slight hue shift for minions
+            )
 
   def can_be_attacked(self):
     return True
@@ -47,42 +63,72 @@ class Minion(Entity):
     self.tactic(self)
 
   def get_attacked(self, enemy, power=None, attack_effect=None, attack_type=None):
+    """Enhanced get_attacked with flinch animation"""
+    self.trigger_flinch_animation()
+
+    # Play hit sound
+    audio_manager.play_sound('hit_impact.ogg')
+
+    # Existing damage logic
     if not power:
-      power = enemy.power
+        power = enemy.power
     if not attack_effect:
-      attack_effect = enemy.attack_effect
+        attack_effect = enemy.attack_effect
     if not attack_type:
-      attack_type = enemy.attack_type
+        attack_type = enemy.attack_type
     self.hp -= max(0, power - self.armor[attack_type])
     if attack_effect:
-      attack_effect.clone(self.x, self.y)
+        attack_effect.clone(self.x, self.y)
     if self.hp > 0:
-      self.update_color()
+        self.update_color()
     else:
-      self.hp = 0
-      self.die()
-      enemy.register_kill(self)
+        self.hp = 0
+        self.die()
+        # Play death sound
+        audio_manager.play_sound('unit_death.ogg')
+        enemy.register_kill(self)
 
   def get_healed(self, amount):
     self.hp += amount
     if self.hp > self.max_hp: self.hp = self.max_hp
     self.update_color()
 
+  def move(self, dx, dy):
+    """Enhanced move with animation trigger"""
+    moved = super(Minion, self).move(dx, dy)
+    if moved:
+        self.trigger_walk_animation(dx)
+        # Play footstep sound
+        audio_manager.play_sound('footstep.ogg', 0.3)
+    return moved
+
   def try_attack(self):
+    """Enhanced attack with animation and sound"""
     enemy = self.enemy_reachable()
     if enemy:
-      enemy.get_attacked(self)
+        self.trigger_attack_animation()
+        # Play attack sound
+        audio_manager.play_sound('sword_swing.ogg')
+        enemy.get_attacked(self)
     return enemy != None
     
   def update(self):
-    if not self.alive: return
+    """Enhanced update with sprite animation"""
+    if not self.alive:
+        return
+
+    # Update sprite animation
+    self.update_sprite_animation()
+
+    # Existing update logic
     for s in self.statuses:
-      s.update()
+        s.update()
     if self.next_action <= 0:
-      self.reset_action()
-      if not self.try_attack():
-        self.follow_tactic()
-    else: self.next_action -= 1
+        self.reset_action()
+        if not self.try_attack():
+            self.follow_tactic()
+    else:
+        self.next_action -= 1
 
   def update_color(self):
     # We change the color to indicate that the minion is wounded
