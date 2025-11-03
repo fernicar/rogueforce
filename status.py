@@ -5,7 +5,13 @@ import skill
 import tactic
 
 import concepts
-import libtcodpy as libtcod
+
+# Import color utilities for pygame compatibility
+try:
+    from color_utils import Color, color_lerp
+    COLOR_UTILS_AVAILABLE = True
+except ImportError:
+    COLOR_UTILS_AVAILABLE = False
 
 import random
 
@@ -397,8 +403,16 @@ class Vanishing(Status):
       self.entity.next_action = 100
       tile = self.entity.bg.tiles[(self.entity.x, self.entity.y)]
       if self.entity.color and tile.bg_color:
-        self.entity.color = libtcod.color_lerp(self.entity.color, tile.bg_color, 1-(self.duration/10.0))
-      # Note: Dynamic color interpolation for status effects - appropriate use of libtcod
+        if COLOR_UTILS_AVAILABLE:
+          self.entity.color = color_lerp(self.entity.color, Color(*tile.bg_color), 1-(self.duration/10.0))
+        else:
+          # Fallback: simple interpolation
+          factor = 1-(self.duration/10.0)
+          r = int(self.entity.color[0] + (tile.bg_color[0] - self.entity.color[0]) * factor)
+          g = int(self.entity.color[1] + (tile.bg_color[1] - self.entity.color[1]) * factor)
+          b = int(self.entity.color[2] + (tile.bg_color[2] - self.entity.color[2]) * factor)
+          self.entity.color = (r, g, b)
+      # Note: Dynamic color interpolation for status effects - using pygame compatible system
 
   def end(self):
     super(Vanishing, self).end()

@@ -6,7 +6,20 @@ from skill import *
 import sieve
 
 import concepts
-import libtcodpy as libtcod
+
+# Import libtcod compatibility layer
+try:
+    import libtcod_compat as libtcod
+    LIBTCOD_AVAILABLE = True
+except ImportError:
+    LIBTCOD_AVAILABLE = False
+
+# Import color utilities for compatibility
+try:
+    from color_utils import Color
+    COLOR_UTILS_AVAILABLE = True
+except ImportError:
+    COLOR_UTILS_AVAILABLE = False
 
 class Flappy(General):
   def __init__(self, battleground, side, x=-1, y=-1, name="Flappy", color=concepts.FACTION_MECHANICS):

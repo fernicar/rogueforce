@@ -2,9 +2,22 @@ import entity
 import status
 
 import concepts
-import libtcodpy as libtcod
 from math import copysign
 import itertools
+
+# Import libtcod compatibility layer
+try:
+    import libtcod_compat as libtcod
+    LIBTCOD_AVAILABLE = True
+except ImportError:
+    LIBTCOD_AVAILABLE = False
+
+# Import color utilities for compatibility
+try:
+    from color_utils import Color
+    COLOR_UTILS_AVAILABLE = True
+except ImportError:
+    COLOR_UTILS_AVAILABLE = False
 
 class Effect(entity.Entity):
   def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, char=' ', color=concepts.ENTITY_DEFAULT):

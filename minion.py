@@ -157,8 +157,13 @@ class Minion(Entity, SpriteEntityMixin if SPRITES_AVAILABLE else object):
     # We change the color to indicate that the minion is wounded
     # More red -> closer to death (health-based dynamic coloring)
     c = int(255*(float(self.hp)/self.max_hp))
-    self.color = libtcod.Color(255, c, c)
-    # Note: Dynamic health-based coloring - kept as libtcod.Color for functionality
+    try:
+      from color_utils import Color
+      self.color = Color(255, c, c)
+    except ImportError:
+      # Fallback to tuple format
+      self.color = (255, c, c)
+    # Note: Dynamic health-based coloring - using pygame compatible Color
 
 class BigMinion(BigEntity, Minion):
   def __init__(self, battleground, side, x=-1, y=-1, name="Giant", chars=['G']*4, colors=[concepts.ENTITY_DEFAULT]*4):
