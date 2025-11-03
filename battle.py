@@ -3,7 +3,6 @@ from battleground import Battleground
 from general import *
 from window import *
 
-import concepts
 import pygame
 
 import copy
@@ -88,8 +87,8 @@ class BattleWindow(Window):
     #TODO: detect draws
     for i in [0,1]:
       if not self.bg.generals[i].alive:
-        self.message(self.bg.generals[i].name + ": " + self.bg.generals[i].death_quote, self.bg.generals[i].original_color)
-        self.message(self.bg.generals[i].name + " is dead!", self.bg.generals[i].original_color)
+        self.message(self.bg.generals[i].name + ": " + self.bg.generals[i].death_quote)
+        self.message(self.bg.generals[i].name + " is dead!")
         self.game_over = True
         return self.bg.generals[(i+1)%2]
     return None
@@ -122,8 +121,7 @@ class BattleWindow(Window):
             match = SKILL_PATTERN.match(m)
             if match:
               if self.bg.generals[i].use_skill(*map(int, match.groups())):
-                self.message(self.bg.generals[i].name + ": " + self.bg.generals[i].skills[int(match.group(1))].quote,
-                             self.bg.generals[i].color)
+                self.message(self.bg.generals[i].name + ": " + self.bg.generals[i].skills[int(match.group(1))].quote)
 
   def render_info(self, x, y):
     x = int(x)
@@ -140,7 +138,7 @@ class BattleWindow(Window):
             skill_index = (y - 5) // 2
             if 0 <= skill_index < len(self.bg.generals[i].skills):
                 skill = self.bg.generals[i].skills[skill_index]
-                self.draw_text(skill.description, INFO_OFFSET_X * 10, INFO_OFFSET_Y * 10, concepts.UI_TEXT)
+                self.draw_text(skill.description, INFO_OFFSET_X * 10, INFO_OFFSET_Y * 10, pygame.Color('white'))
                 return
     super().render_info(x, y)
 
@@ -149,27 +147,27 @@ class BattleWindow(Window):
     
     x_offset = (PANEL_WIDTH + BG_WIDTH) * i * 10
 
-    self.draw_text(g.char, x_offset + (bar_offset_x - 1) * 10, 10, g.color)
-    self.render_bar(x_offset + bar_offset_x * 10, 10, bar_length * 10, g.hp, g.max_hp, concepts.STATUS_HEALTH_LOW, concepts.STATUS_HEALTH_MEDIUM, concepts.UI_BACKGROUND)
+    self.draw_text(g.name, x_offset + (bar_offset_x - 1) * 10, 10, pygame.Color('white'))
+    self.render_bar(x_offset + bar_offset_x * 10, 10, bar_length * 10, g.hp, g.max_hp, pygame.Color('red'), pygame.Color('green'), pygame.Color('black'))
 
     line = 3
     for j in range(len(g.skills)):
         skill = g.skills[j]
-        self.draw_text(KEYMAP_SKILLS[j], x_offset + (bar_offset_x - 1) * 10, line * 10, concepts.STATUS_SELECTED)
-        self.render_bar(x_offset + bar_offset_x * 10, line * 10, bar_length * 10, skill.cd, skill.max_cd, concepts.STATUS_PROGRESS_DARK, concepts.STATUS_PROGRESS_LIGHT, concepts.UI_BACKGROUND)
+        self.draw_text(KEYMAP_SKILLS[j], x_offset + (bar_offset_x - 1) * 10, line * 10, pygame.Color('yellow'))
+        self.render_bar(x_offset + bar_offset_x * 10, line * 10, bar_length * 10, skill.cd, skill.max_cd, pygame.Color('darkgray'), pygame.Color('lightgray'), pygame.Color('black'))
         line += 2
 
-    self.draw_text(f"{g.minions_alive} {g.minion.name}s", x_offset + 30, (line + 1) * 10, concepts.UI_TEXT)
+    self.draw_text(f"{g.minions_alive} {g.minion.name}s", x_offset + 30, (line + 1) * 10, pygame.Color('white'))
 
     line = self.render_tactics(i) + 1
     swap_ready = g.swap_cd >= g.swap_max_cd
 
     for r in self.bg.reserves[i]:
-        self.draw_text(r.char, x_offset + (bar_offset_x - 1) * 10, line * 10, r.color)
+        self.draw_text(r.name[0], x_offset + (bar_offset_x - 1) * 10, line * 10, pygame.Color('white'))
         if swap_ready:
-            self.render_bar(x_offset + bar_offset_x * 10, line * 10, bar_length * 10, r.hp, r.max_hp, concepts.STATUS_HEALTH_LOW, concepts.STATUS_HEALTH_MEDIUM, concepts.UI_BACKGROUND)
+            self.render_bar(x_offset + bar_offset_x * 10, line * 10, bar_length * 10, r.hp, r.max_hp, pygame.Color('red'), pygame.Color('green'), pygame.Color('black'))
         else:
-            self.render_bar(x_offset + bar_offset_x * 10, line * 10, bar_length * 10, g.swap_cd, g.swap_max_cd, concepts.STATUS_PROGRESS_DARK, concepts.STATUS_PROGRESS_LIGHT, concepts.UI_BACKGROUND)
+            self.render_bar(x_offset + bar_offset_x * 10, line * 10, bar_length * 10, g.swap_cd, g.swap_max_cd, pygame.Color('darkgray'), pygame.Color('lightgray'), pygame.Color('black'))
         line += 2
 
   def render_tactics(self, i):
@@ -177,7 +175,7 @@ class BattleWindow(Window):
     x_offset = (PANEL_WIDTH + BG_WIDTH) * i * 10
     line = 7 + len(self.bg.generals[i].skills)*2
     for s in range(len(self.bg.generals[i].tactics)):
-      fg_color = concepts.STATUS_HEALTH_LOW if self.bg.generals[i].tactics[s] == self.bg.generals[i].selected_tactic else concepts.STATUS_SELECTED
+      fg_color = pygame.Color('red') if self.bg.generals[i].tactics[s] == self.bg.generals[i].selected_tactic else pygame.Color('yellow')
       self.draw_text(KEYMAP_TACTICS[s] + ": " + self.bg.generals[i].tactic_quotes[s], x_offset + bar_offset_x * 10, line * 10, fg_color)
       line += 2
     return line

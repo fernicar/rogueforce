@@ -1,9 +1,5 @@
 import entity
-
-import concepts
 import pygame
-import sys
-
 import os
 
 class Battleground(object):
@@ -32,21 +28,18 @@ class Battleground(object):
     for x in range(self.width):
       for y in range(self.height):
         if x in [0, self.width-1] or y in [0, self.height-1]: # Walls
-          self.tiles[(x,y)] = Tile(x, y, "#", False)
-          self.tiles[(x,y)].color = concepts.UI_TEXT  # White walls for visibility
+          self.tiles[(x,y)] = Tile(x, y, False, sprite_name='wall')
         else: # Floor
-          self.tiles[(x,y)] = Tile(x, y)
-          self.tiles[(x,y)].char = '.'  # Keep dot but make it brighter
-          self.tiles[(x,y)].color = (200, 200, 200)  # Light grey for better visibility
+          self.tiles[(x,y)] = Tile(x, y, True, sprite_name='floor')
 
   def draw(self, screen, font):
     from window import BG_OFFSET_X, BG_OFFSET_Y
-    for y in range(self.h):
-        for x in range(self.w):
+    for y in range(self.height):
+        for x in range(self.width):
             tile = self.tiles[(x, y)]
             tile.draw(screen, (x + BG_OFFSET_X) * 10, (y + BG_OFFSET_Y) * 10, font)
 
-  def hover_tiles(self, l, color=concepts.UI_HOVER_DEFAULT):
+  def hover_tiles(self, l, color=pygame.Color('yellow')):
     self.unhover_tiles()
     for t in l:
       t.hover(color)
@@ -59,59 +52,67 @@ class Battleground(object):
     forts = []
     passables = ['.']
     f = open(os.path.join("data", tilefile), 'r')
-    for y in range(self.height):
-      x = 0
-      for c in f.readline():
-        self.tiles[(x,y)] = Tile(x, y, c, c in passables)
-        if c == ':':
-          forts.append((x,y))
-        x += 1
+    y = 0
+    for line in f:
+        x = 0
+        for c in line:
+            if c in passables:
+                self.tiles[(x,y)] = Tile(x, y, True, sprite_name='floor')
+            else:
+                self.tiles[(x,y)] = Tile(x, y, False, sprite_name='wall')
+            if c == ':':
+                forts.append((x,y))
+            x += 1
+        y += 1
     f.close()
     for f in forts:
-      self.fortresses.append(entity.Fortress(self, entity.NEUTRAL_SIDE, f[0], f[1], [self.tiles[f].char]*4, [concepts.ENTITY_DEFAULT]*4))
+      self.fortresses.append(entity.Fortress(self, entity.NEUTRAL_SIDE, f[0], f[1]))
 
   def unhover_tiles(self):
     for t in self.hovered:
       t.unhover()
 
 class Tile(object):
-  def __init__(self, x, y, char='.', passable=True):
+  def __init__(self, x, y, passable=True, sprite_name='floor'):
     self.passable = passable
-    self.char = char
-    self.color = concepts.UI_TILE_NEUTRAL
-    self.bg_original_color = concepts.UI_BACKGROUND
-    self.bg_color = concepts.UI_BACKGROUND
+    self.sprite_name = sprite_name
+    self.bg_original_color = pygame.Color('black')
+    self.bg_color = self.bg_original_color
     self.entity = None
     self.effects = []
     self.x = x
     self.y = y
-    self.hover = False
-
-  def get_char(self, x, y):
-    return self.char
+    self.hovered = False
+    self.animator = None
 
   def is_passable(self, passenger):
     return self.passable and (self.entity == None or self.entity.is_ally(passenger))
 
   def draw(self, screen, px, py, font):
-    color = self.color
-    if self.entity:
-        color = self.entity.color
-    if self.hover:
-        color = self.hover_color
+    from asset_manager import AssetManager
+
+    # Draw background color
     pygame.draw.rect(screen, self.bg_color, (px, py, 10, 10))
-    if not (self.entity and hasattr(self.entity, 'has_sprites') and self.entity.has_sprites):
-        # Fallback to drawing character if no sprite
-        char = self.char
-        if self.entity:
-            char = self.entity.char
-        surface = font.render(char, True, color)
-        screen.blit(surface, (px, py))
-  
-  def hover(self, color=concepts.UI_HOVER_DEFAULT):
+
+    # Draw tile sprite
+    if not self.animator:
+        self.animator = AssetManager.get_animator(self.sprite_name)
+
+    if self.animator:
+        sprite = self.animator.get_current_sprite()
+        if sprite:
+            screen.blit(sprite, (px, py))
+
+    # Draw entity sprite on top
+    if self.entity and self.entity.animator:
+        sprite = self.entity.animator.get_current_sprite()
+        if sprite:
+            screen.blit(sprite, (px, py))
+
+  def hover(self, color=pygame.Color('yellow')):
     self.bg_color = color
-    self.hover = True
+    self.hovered = True
 
   def unhover(self):
     self.bg_color = self.bg_original_color
-    self.hover = False
+    self.hovered = False

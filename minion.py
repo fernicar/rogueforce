@@ -22,7 +22,7 @@ class Minion(Entity):
 
   def clone(self, x, y):
     if self.bg.is_inside(x, y) and self.bg.tiles[(x, y)].entity is None and self.bg.tiles[(x, y)].is_passable(self):
-      return self.__class__(self.bg, self.side, x, y, self.name, self.sprite_name)
+      return self.__class__(self.bg, self.side, x, y, self.name, self.character_name)
     return None
 
   def die(self):
@@ -44,6 +44,7 @@ class Minion(Entity):
     self.tactic(self)
 
   def get_attacked(self, enemy, power=None, attack_effect=None, attack_type=None):
+    super().get_attacked(enemy, power, attack_effect, attack_type)
     if not power:
       power = enemy.power
     if not attack_effect:
@@ -65,6 +66,7 @@ class Minion(Entity):
   def try_attack(self):
     enemy = self.enemy_reachable()
     if enemy:
+      self.trigger_attack_animation()
       enemy.get_attacked(self)
     return enemy != None
     
@@ -88,7 +90,7 @@ class BigMinion(BigEntity, Minion):
     for (pos_x, pos_y) in [(x+i, y+j) for i in range (0, self.length) for j in range (0, self.length)]:
       if not self.bg.is_inside(pos_x, pos_y) or self.bg.tiles[(pos_x, pos_y)].entity is not None or not self.bg.tiles[(x, y)].is_passable(self):
         return None
-    entity = self.__class__(self.bg, self.side, x, y, self.name, self.sprite_name)
+    entity = self.__class__(self.bg, self.side, x, y, self.name, self.character_name)
     entity.update_body()
     return entity
 
@@ -112,11 +114,12 @@ class RangedMinion(Minion):
 
   def clone(self, x, y):
     if super(RangedMinion, self).clone(x, y) == None: return None
-    return self.__class__(self.bg, self.side, x, y, self.name, self.sprite_name)
+    return self.__class__(self.bg, self.side, x, y, self.name, self.character_name)
 
   def follow_tactic(self):
     if self.tactic is None: return
     next_x = self.x+1 if self.side == 0 else self.x-1
     if self.tactic == tactic.stop and self.bg.tiles[(next_x, self.y)].entity == None:
+      self.trigger_attack_animation()
       self.bg.effects.append(effect.Arrow(self.bg, self.side, next_x, self.y, self.ranged_power))
     else: super(RangedMinion, self).follow_tactic()

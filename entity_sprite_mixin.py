@@ -1,5 +1,5 @@
 from sprite_animator import SpriteAnimator, AnimationState
-from asset_manager import asset_manager
+from asset_manager import AssetManager
 from config import DEBUG, SPRITE_SCALE_GENERAL, CAMERA_VIEW_BATTLE
 
 class SpriteEntityMixin:
@@ -9,7 +9,7 @@ class SpriteEntityMixin:
         """Initialize sprite system for this entity"""
         self.character_name = character_name
         self.sprite_scale = scale
-        self.sprite_set = asset_manager.load_character_sprites(
+        self.sprite_set = AssetManager.load_character_sprites(
             character_name, scale, hue_shift
         )
 

@@ -1,18 +1,17 @@
 import pygame
-from asset_manager import AssetManager
+from entity_sprite_mixin import SpriteEntityMixin
 import cmath as math
 
 NEUTRAL_SIDE = 555
 
-class Entity(object):
+class Entity(SpriteEntityMixin):
   def __init__(self, battleground, side=NEUTRAL_SIDE, x=-1, y=-1, sprite_name=None, name="Entity"):
     self.bg = battleground
     self.x = x
     self.y = y
     self.side = side
     self.name = name
-    self.sprite_name = sprite_name
-    self.animator = AssetManager.get_animator(sprite_name) if sprite_name else None
+    self.init_sprite_system(sprite_name)
 
     if x != -1 and y != -1:
         self.bg.tiles[(x, y)].entity = self
@@ -59,6 +58,9 @@ class Entity(object):
         self.bg.tiles[(self.x, self.y)].entity = None
     self.alive = False
   
+  def get_attacked(self, enemy, power=None, attack_effect=None, attack_type=None):
+    self.trigger_flinch_animation()
+
   def get_passable_neighbours(self):
     neighbours = [(self.x+i, self.y+j) for i in range(-1,2) for j in range(-1,2)] 
     return filter(lambda t: self.bg.tiles[t].passable and t != (self.x, self.y), neighbours)
@@ -72,6 +74,7 @@ class Entity(object):
     return self.side == entity.side
 
   def move(self, dx, dy):
+    self.trigger_walk_animation(dx)
     if self.pushed:
       self.pushed = False
       return False
@@ -114,8 +117,7 @@ class Entity(object):
     return False
 
   def update(self):
-    if self.animator:
-        self.animator.update()
+    self.update_sprite_animation()
     for s in self.statuses:
       s.update()
 
@@ -149,6 +151,7 @@ class BigEntity(Entity):
     self.alive = False
     
   def move(self, dx, dy):
+    self.trigger_walk_animation(dx)
     if self.pushed:
       self.pushed = False
       return
@@ -232,6 +235,7 @@ class Mine(Entity):
     return None
 
   def get_attacked(self, attacker):
+    super().get_attacked(attacker)
     if attacker.can_be_attacked():
       attacker.get_attacked(self)
     self.die()
