@@ -16,6 +16,9 @@ class Bloodrotter(General):
     self.power = 11
     self.thirst_charges = 0
     self.prev_thirst_charges = 0
+    
+    # Set character name for sprite system
+    self.character_name = "bloodrotter"
 
   def initialize_skills(self):
     self.skills = []
@@ -56,6 +59,9 @@ class Ox(General):
     self.rand = random.Random()
     self.max_hp = 400
     self.helix_index = 2
+    
+    # Set character name for sprite system
+    self.character_name = "ox"
 
   def get_attacked(self, enemy, power=None, attack_effect=None, attack_type=None):
     if not attack_type:
@@ -103,6 +109,9 @@ class Pock(General):
     self.orb = Orb(self.bg, self.side, char='o', color=self.color)
     self.orb_index = 0
     self.jaunt_index = 4
+    
+    # Set character name for sprite system
+    self.character_name = "pock"
 
   def initialize_skills(self):
     self.skills = []
@@ -142,6 +151,9 @@ class Rubock(General):
     super(Rubock, self).__init__(battleground, side, x, y, name, color)
     self.copied_skill = 2
     self.armor["physical"] = 1
+    
+    # Set character name for sprite system
+    self.character_name = "rubock"
 
   def initialize_skills(self):
     self.skills = []

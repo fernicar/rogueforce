@@ -16,6 +16,9 @@ class Ares(General):
     self.flag = None
     self.tactics = [tactic.null]
     self.tactic_quotes = ["Slash'em all!"]
+    
+    # Set character name for sprite system
+    self.character_name = "ares"
 
   def initialize_skills(self):
     self.skills = []

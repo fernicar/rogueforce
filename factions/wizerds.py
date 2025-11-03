@@ -12,6 +12,9 @@ class Starcall(General):
   def __init__(self, battleground, side, x=-1, y=-1, name="Starcall", color=concepts.FACTION_WIZERDS):
     super(Starcall, self).__init__(battleground, side, x, y, name, color)
     self.rand = random.Random()
+    
+    # Set character name for sprite system
+    self.character_name = "starcall"
    
   def initialize_skills(self):
     self.skills = []

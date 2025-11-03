@@ -4,7 +4,21 @@ from general import *
 from window import *
 
 import concepts
-import libtcodpy as libtcod
+
+# Import pygame rendering system directly
+try:
+    import pygame
+    from libtcod_compat import Console
+    PYGAME_AVAILABLE = True
+except ImportError:
+    PYGAME_AVAILABLE = False
+
+# Import color utilities for compatibility
+try:
+    from color_utils import Color
+    COLOR_UTILS_AVAILABLE = True
+except ImportError:
+    COLOR_UTILS_AVAILABLE = False
 
 import copy
 import re

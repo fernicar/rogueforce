@@ -8,7 +8,15 @@ import tactic
 
 from collections import defaultdict
 
-class Minion(Entity):
+# Import sprite system
+try:
+    from entity_sprite_mixin import SpriteEntityMixin
+    from config import SPRITE_SCALE_MINION, DEBUG
+    SPRITES_AVAILABLE = True
+except ImportError:
+    SPRITES_AVAILABLE = False
+
+class Minion(Entity, SpriteEntityMixin if SPRITES_AVAILABLE else object):
   def __init__(self, battleground, side, x=-1, y=-1, name="minion", char='m', color=concepts.ENTITY_DEFAULT):
     super(Minion, self).__init__(battleground, side, x, y, char, color)
     self.name = name
@@ -18,6 +26,19 @@ class Minion(Entity):
     self.power = 5
     self.tactic = tactic.null
     self.attack_effect = effect.TempEffect(self.bg, char='/' if side else '\\')
+    
+    # Initialize sprite system for minions
+    if SPRITES_AVAILABLE:
+      # Minions use their general's sprite with hue shift and 0.8 scale
+      if hasattr(battleground, 'generals') and side < len(battleground.generals):
+        general = battleground.generals[side]
+        if hasattr(general, 'character_name'):
+          # Use general's sprite with hue shift for variation
+          self.init_sprite_system(
+            general.character_name, 
+            scale=SPRITE_SCALE_MINION,
+            hue_shift=20  # Slight hue shift for minions
+          )
 
   def can_be_attacked(self):
     return True
@@ -26,6 +47,19 @@ class Minion(Entity):
     if self.bg.is_inside(x, y) and self.bg.tiles[(x, y)].entity is None and self.bg.tiles[(x, y)].is_passable(self):
       return self.__class__(self.bg, self.side, x, y, self.name, self.char, self.original_color)
     return None
+  
+  def move(self, dx, dy):
+    """Enhanced move with animation trigger"""
+    moved = super(Minion, self).move(dx, dy)
+    if moved and SPRITES_AVAILABLE:
+      self.trigger_walk_animation(dx)
+      # Play footstep sound
+      try:
+        from audio_manager import audio_manager
+        audio_manager.play_sound('footstep.ogg', 0.3)
+      except ImportError:
+        pass
+    return moved
 
   def die(self):
     super(Minion, self).die()
@@ -47,6 +81,18 @@ class Minion(Entity):
     self.tactic(self)
 
   def get_attacked(self, enemy, power=None, attack_effect=None, attack_type=None):
+    """Enhanced get_attacked with flinch animation"""
+    if SPRITES_AVAILABLE:
+      self.trigger_flinch_animation()
+    
+    # Play hit sound
+    try:
+      from audio_manager import audio_manager
+      audio_manager.play_sound('hit_impact.ogg')
+    except ImportError:
+      pass
+    
+    # Existing damage logic
     if not power:
       power = enemy.power
     if not attack_effect:
@@ -61,6 +107,11 @@ class Minion(Entity):
     else:
       self.hp = 0
       self.die()
+      # Play death sound
+      try:
+        audio_manager.play_sound('unit_death.ogg')
+      except:
+        pass
       enemy.register_kill(self)
 
   def get_healed(self, amount):
@@ -69,27 +120,50 @@ class Minion(Entity):
     self.update_color()
 
   def try_attack(self):
+    """Enhanced attack with animation and sound"""
     enemy = self.enemy_reachable()
     if enemy:
+      if SPRITES_AVAILABLE:
+        self.trigger_attack_animation()
+      # Play attack sound
+      try:
+        from audio_manager import audio_manager
+        audio_manager.play_sound('sword_swing.ogg')
+      except ImportError:
+        pass
       enemy.get_attacked(self)
     return enemy != None
     
   def update(self):
-    if not self.alive: return
+    """Enhanced update with sprite animation"""
+    if not self.alive: 
+      return
+    
+    # Update sprite animation
+    if SPRITES_AVAILABLE:
+      self.update_sprite_animation()
+    
+    # Existing update logic
     for s in self.statuses:
       s.update()
     if self.next_action <= 0:
       self.reset_action()
       if not self.try_attack():
         self.follow_tactic()
-    else: self.next_action -= 1
+    else: 
+      self.next_action -= 1
 
   def update_color(self):
     # We change the color to indicate that the minion is wounded
     # More red -> closer to death (health-based dynamic coloring)
     c = int(255*(float(self.hp)/self.max_hp))
-    self.color = libtcod.Color(255, c, c)
-    # Note: Dynamic health-based coloring - kept as libtcod.Color for functionality
+    try:
+      from color_utils import Color
+      self.color = Color(255, c, c)
+    except ImportError:
+      # Fallback to tuple format
+      self.color = (255, c, c)
+    # Note: Dynamic health-based coloring - using pygame compatible Color
 
 class BigMinion(BigEntity, Minion):
   def __init__(self, battleground, side, x=-1, y=-1, name="Giant", chars=['G']*4, colors=[concepts.ENTITY_DEFAULT]*4):
@@ -97,6 +171,17 @@ class BigMinion(BigEntity, Minion):
     Minion.__init__(self, battleground, side, x, y, name, colors[0])
     self.max_hp *= self.length
     self.hp = self.max_hp
+    
+    # Initialize sprite system for big minions (use general's sprite)
+    if SPRITES_AVAILABLE:
+      if hasattr(battleground, 'generals') and side < len(battleground.generals):
+        general = battleground.generals[side]
+        if hasattr(general, 'character_name'):
+          self.init_sprite_system(
+            general.character_name, 
+            scale=SPRITE_SCALE_MINION,
+            hue_shift=30  # Different hue shift for big minions
+          )
     
   def clone(self, x, y):
     for (pos_x, pos_y) in [(x+i, y+j) for i in range (0, self.length) for j in range (0, self.length)]:
@@ -125,6 +210,17 @@ class RangedMinion(Minion):
     self.attack_effects = attack_effects
     self.default_next_action = 10
     self.reset_action()
+    
+    # Initialize sprite system for ranged minions (use general's sprite)
+    if SPRITES_AVAILABLE:
+      if hasattr(battleground, 'generals') and side < len(battleground.generals):
+        general = battleground.generals[side]
+        if hasattr(general, 'character_name'):
+          self.init_sprite_system(
+            general.character_name, 
+            scale=SPRITE_SCALE_MINION,
+            hue_shift=25  # Different hue shift for ranged minions
+          )
 
   def clone(self, x, y):
     if super(RangedMinion, self).clone(x, y) == None: return None

@@ -6,13 +6,30 @@ from skill import *
 import sieve
 
 import concepts
-import libtcodpy as libtcod
+
+# Import pygame rendering system directly
+try:
+    import pygame
+    from libtcod_compat import Console
+    PYGAME_AVAILABLE = True
+except ImportError:
+    PYGAME_AVAILABLE = False
+
+# Import color utilities for compatibility
+try:
+    from color_utils import Color
+    COLOR_UTILS_AVAILABLE = True
+except ImportError:
+    COLOR_UTILS_AVAILABLE = False
 
 class Flappy(General):
   def __init__(self, battleground, side, x=-1, y=-1, name="Flappy", color=concepts.FACTION_MECHANICS):
     super(Flappy, self).__init__(battleground, side, x, y, name, color)
     self.death_quote = "I'll be back, like a boo... me..."
     self.minion = Minion(self.bg, self.side, name="goblin")
+    
+    # Set character name for sprite system
+    self.character_name = "flappy"
 
   def draw_slingshot(self):
     if self.side:

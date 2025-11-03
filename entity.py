@@ -1,6 +1,27 @@
 import concepts
-import libtcodpy as libtcod
 import cmath as math
+
+# Import sprite system (will be used by subclasses)
+try:
+    from entity_sprite_mixin import SpriteEntityMixin
+    SPRITES_AVAILABLE = True
+except ImportError:
+    SPRITES_AVAILABLE = False
+
+# Import color utilities for pygame compatibility
+try:
+    from color_utils import Color
+    COLOR_UTILS_AVAILABLE = True
+except ImportError:
+    COLOR_UTILS_AVAILABLE = False
+
+# Import pygame rendering system directly
+try:
+    import pygame
+    from libtcod_compat import Console
+    PYGAME_AVAILABLE = True
+except ImportError:
+    PYGAME_AVAILABLE = False
 
 NEUTRAL_SIDE = 555
 

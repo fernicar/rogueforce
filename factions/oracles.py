@@ -8,7 +8,21 @@ from skill import *
 from status import *
 
 import concepts
-import libtcodpy as libtcod
+
+# Import pygame rendering system directly
+try:
+    import pygame
+    from libtcod_compat import Console
+    PYGAME_AVAILABLE = True
+except ImportError:
+    PYGAME_AVAILABLE = False
+
+# Import color utilities for compatibility
+try:
+    from color_utils import Color
+    COLOR_UTILS_AVAILABLE = True
+except ImportError:
+    COLOR_UTILS_AVAILABLE = False
 
 import random
 
@@ -27,6 +41,9 @@ class Gemekaa(General):
     self.formation = formation.InvertedWedge(self, 3)
     self.minion = Slave(self.bg, self.side)
     self.starting_minions = 251
+    
+    # Set character name for sprite system
+    self.character_name = "gemekaa"
 
   def initialize_skills(self):
     self.skills = []
