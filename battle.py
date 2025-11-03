@@ -4,7 +4,7 @@ from general import *
 from window import *
 
 import concepts
-import libtcodpy as libtcod
+import pygame
 
 import copy
 import re
@@ -48,33 +48,40 @@ class BattleWindow(Window):
     ai_side = (self.side+1)%2
     return self.bg.generals[ai_side].ai_action(turn)
 
-  def check_input(self, key, mouse, x, y):
-    if chr(key.c).upper() == 'S':
-      return "stop\n"
-    if mouse.rbutton_pressed:
-      return "flag ({0},{1})\n".format(x, y)
-    n = self.keymap_swap.find(chr(key.c)) # Number of the swap pressed
-    if n != -1: 
-      return "swap{0}\n".format(n)
-    n = self.keymap_skills.find(chr(key.c).upper()) # Number of the skill pressed
-    if n != -1: 
-      if chr(key.c).isupper(): # With uppercase we show the area
-        self.hover_function = self.bg.generals[self.side].skills[n].get_area_tiles
-      else: # Use the skill
-        self.hover_function = None
-        return "skill{0} ({1},{2})\n".format(n, x, y)
-    if chr(key.c) == ' ':
-      if self.bg.generals[self.side].tactics.index(self.bg.generals[self.side].selected_tactic) == 0:
-        n = self.bg.generals[self.side].tactics.index(self.bg.generals[self.side].previous_tactic)
-      else:
-        self.bg.generals[self.side].previous_tactic = self.bg.generals[self.side].selected_tactic
-        n = 0
-    else:
-      if self.bg.generals[self.side].tactics.index(self.bg.generals[self.side].selected_tactic) != 0:
-        self.bg.generals[self.side].previous_tactic = self.bg.generals[self.side].selected_tactic
-      n = self.keymap_tactics.find(chr(key.c).upper()) # Number of the tactic pressed
-    if n != -1:
-      return "tactic{0}\n".format(n)
+  def check_input(self, event):
+    if event.type == pygame.KEYDOWN:
+        key_char = event.unicode.upper()
+        if key_char == 'S':
+            return "stop\n"
+        n = self.keymap_swap.find(key_char)
+        if n != -1:
+            return "swap{0}\n".format(n)
+        n = self.keymap_skills.find(key_char)
+        if n != -1:
+            if pygame.key.get_mods() & pygame.KMOD_SHIFT:
+                self.hover_function = self.bg.generals[self.side].skills[n].get_area_tiles
+            else:
+                x, y = pygame.mouse.get_pos()
+                x = int(x / 10 - BG_OFFSET_X)
+                y = int(y / 10 - BG_OFFSET_Y)
+                self.hover_function = None
+                return "skill{0} ({1},{2})\n".format(n, x, y)
+        if event.key == pygame.K_SPACE:
+            if self.bg.generals[self.side].tactics.index(self.bg.generals[self.side].selected_tactic) == 0:
+                n = self.bg.generals[self.side].tactics.index(self.bg.generals[self.side].previous_tactic)
+            else:
+                self.bg.generals[self.side].previous_tactic = self.bg.generals[self.side].selected_tactic
+                n = 0
+        else:
+            n = self.keymap_tactics.find(key_char)
+        if n != -1:
+            return "tactic{0}\n".format(n)
+    elif event.type == pygame.MOUSEBUTTONDOWN:
+        if event.button == 3: # Right click
+            x, y = pygame.mouse.get_pos()
+            x = int(x / 10 - BG_OFFSET_X)
+            y = int(y / 10 - BG_OFFSET_Y)
+            return "flag ({0},{1})\n".format(x, y)
     return None
 
   def check_winner(self):
@@ -119,74 +126,61 @@ class BattleWindow(Window):
                 self.message(self.bg.generals[i].name + ": " + self.bg.generals[i].skills[int(match.group(1))].quote,
                              self.bg.generals[i].color)
 
-  def render_msgs(self):
-    y = 0
-    for (line, color) in self.game_msgs:
-      self.con_msgs.print(0, y, line, color)
-      y += 1
 
   def render_info(self, x, y):
-    self.con_info.print(0, 0, " " * INFO_WIDTH)
+    x = int(x)
+    y = int(y)
     i = -1
     if -13 < x < -1:
-      i = 0
+        i = 0
     elif BG_WIDTH + 1 < x < BG_WIDTH + 13:
-      i = 1
+        i = 1
     
     if i != -1:
-      nskills = len(self.bg.generals[i].skills)
-      if (5 + nskills * 2) > y > 3:
-        skill_index = (y - 5) // 2  # Fixed integer division
-        if 0 <= skill_index < len(self.bg.generals[i].skills):
-          skill = self.bg.generals[i].skills[skill_index]
-          self.con_info.print(0, 0, skill.description, concepts.UI_TEXT)
-          return
-    super(BattleWindow, self).render_info(x, y)
+        nskills = len(self.bg.generals[i].skills)
+        if (5 + nskills * 2) > y > 3:
+            skill_index = (y - 5) // 2
+            if 0 <= skill_index < len(self.bg.generals[i].skills):
+                skill = self.bg.generals[i].skills[skill_index]
+                self.draw_text(skill.description, INFO_OFFSET_X * 10, INFO_OFFSET_Y * 10, concepts.UI_TEXT)
+                return
+    super().render_info(x, y)
 
   def render_side_panel(self, i, bar_length, bar_offset_x):
     g = self.bg.generals[i]
-    # Convert colors to tuples for libtcod compatibility
-    def get_color_tuple(color):
-      if hasattr(color, 'r'):  # tcod Color object
-        return (color.r, color.g, color.b)
-      elif isinstance(color, tuple) and len(color) == 3:
-        return color
-      else:
-        return color
     
-    g_color = get_color_tuple(g.color)
-    black = concepts.UI_BACKGROUND
-    libtcod.console_put_char_ex(self.con_panels[i], bar_offset_x-1, 1, g.char, g_color, black)
-    self.render_bar(self.con_panels[i], bar_offset_x, 1, bar_length, g.hp, g.max_hp, concepts.STATUS_HEALTH_LOW, concepts.STATUS_HEALTH_MEDIUM, black)
+    x_offset = (PANEL_WIDTH + BG_WIDTH) * i * 10
+
+    self.draw_text(g.char, x_offset + (bar_offset_x - 1) * 10, 10, g.color)
+    self.render_bar(x_offset + bar_offset_x * 10, 10, bar_length * 10, g.hp, g.max_hp, concepts.STATUS_HEALTH_LOW, concepts.STATUS_HEALTH_MEDIUM, concepts.UI_BACKGROUND)
+
     line = 3
-    for j in range(0, len(g.skills)):
-      skill = g.skills[j]
-      white = concepts.STATUS_SELECTED
-      libtcod.console_put_char_ex(self.con_panels[i], bar_offset_x-1, line, KEYMAP_SKILLS[j], white, black)
-      self.render_bar(self.con_panels[i], bar_offset_x, line, bar_length, skill.cd, skill.max_cd,
-        concepts.STATUS_PROGRESS_DARK, concepts.STATUS_PROGRESS_LIGHT, black)
-      line += 2
-    self.con_panels[i].print(3, line+1, str(self.bg.generals[i].minions_alive) + " " + self.bg.generals[i].minion.name + "s  ",
-      concepts.UI_TEXT)
+    for j in range(len(g.skills)):
+        skill = g.skills[j]
+        self.draw_text(KEYMAP_SKILLS[j], x_offset + (bar_offset_x - 1) * 10, line * 10, concepts.STATUS_SELECTED)
+        self.render_bar(x_offset + bar_offset_x * 10, line * 10, bar_length * 10, skill.cd, skill.max_cd, concepts.STATUS_PROGRESS_DARK, concepts.STATUS_PROGRESS_LIGHT, concepts.UI_BACKGROUND)
+        line += 2
+
+    self.draw_text(f"{g.minions_alive} {g.minion.name}s", x_offset + 30, (line + 1) * 10, concepts.UI_TEXT)
+
     line = self.render_tactics(i) + 1
     swap_ready = g.swap_cd >= g.swap_max_cd
+
     for r in self.bg.reserves[i]:
-      r_color = get_color_tuple(r.color)
-      libtcod.console_put_char_ex(self.con_panels[i], bar_offset_x-1, line, r.char, r_color, black)
-      if swap_ready:
-        self.render_bar(self.con_panels[i], bar_offset_x, line, bar_length, r.hp, r.max_hp,
-                        concepts.STATUS_HEALTH_LOW, concepts.STATUS_HEALTH_MEDIUM, black)
-      else:
-        self.render_bar(self.con_panels[i], bar_offset_x, line, bar_length, g.swap_cd, g.swap_max_cd,
-                        concepts.STATUS_PROGRESS_DARK, concepts.STATUS_PROGRESS_LIGHT, black)
-      line += 2
+        self.draw_text(r.char, x_offset + (bar_offset_x - 1) * 10, line * 10, r.color)
+        if swap_ready:
+            self.render_bar(x_offset + bar_offset_x * 10, line * 10, bar_length * 10, r.hp, r.max_hp, concepts.STATUS_HEALTH_LOW, concepts.STATUS_HEALTH_MEDIUM, concepts.UI_BACKGROUND)
+        else:
+            self.render_bar(x_offset + bar_offset_x * 10, line * 10, bar_length * 10, g.swap_cd, g.swap_max_cd, concepts.STATUS_PROGRESS_DARK, concepts.STATUS_PROGRESS_LIGHT, concepts.UI_BACKGROUND)
+        line += 2
 
   def render_tactics(self, i):
     bar_offset_x = 3
+    x_offset = (PANEL_WIDTH + BG_WIDTH) * i * 10
     line = 7 + len(self.bg.generals[i].skills)*2
-    for s in range(0, len(self.bg.generals[i].tactics)):
+    for s in range(len(self.bg.generals[i].tactics)):
       fg_color = concepts.STATUS_HEALTH_LOW if self.bg.generals[i].tactics[s] == self.bg.generals[i].selected_tactic else concepts.STATUS_SELECTED
-      self.con_panels[i].print(bar_offset_x, line, KEYMAP_TACTICS[s] + ": " + self.bg.generals[i].tactic_quotes[s], fg = fg_color)
+      self.draw_text(KEYMAP_TACTICS[s] + ": " + self.bg.generals[i].tactic_quotes[s], x_offset + bar_offset_x * 10, line * 10, fg_color)
       line += 2
     return line
 

@@ -8,7 +8,6 @@ import effect
 import tactic
 
 import concepts
-import libtcodpy as libtcod
 
 import math
 

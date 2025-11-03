@@ -1,7 +1,7 @@
 import entity
 
 import concepts
-import libtcodpy as libtcod
+import pygame
 import sys
 
 import os
@@ -39,18 +39,12 @@ class Battleground(object):
           self.tiles[(x,y)].char = '.'  # Keep dot but make it brighter
           self.tiles[(x,y)].color = (200, 200, 200)  # Light grey for better visibility
 
-  def draw(self, con):
-    from config import DEBUG
-    tile_count = 0
-    for pos in self.tiles:
-      tile = self.tiles[pos]
-      if DEBUG:
-        if tile_count < 5:  # Only debug first few tiles to avoid spam
-          sys.stdout.write(f"DEBUG: Drawing tile at ({tile.x},{tile.y}) char='{tile.char}' color={tile.color}\n")
-      tile.draw(con)
-      tile_count += 1
-    if DEBUG:
-      sys.stdout.write(f"DEBUG: Total tiles drawn: {tile_count}\n")
+  def draw(self, screen, font):
+    from window import BG_OFFSET_X, BG_OFFSET_Y
+    for y in range(self.h):
+        for x in range(self.w):
+            tile = self.tiles[(x, y)]
+            tile.draw(screen, (x + BG_OFFSET_X) * 10, (y + BG_OFFSET_Y) * 10, font)
 
   def hover_tiles(self, l, color=concepts.UI_HOVER_DEFAULT):
     self.unhover_tiles()
@@ -98,14 +92,20 @@ class Tile(object):
   def is_passable(self, passenger):
     return self.passable and (self.entity == None or self.entity.is_ally(passenger))
 
-  def draw(self, con):
-    if len(self.effects) > 0 and self.effects[-1].char:
-      drawable = self.effects[-1]
-    elif self.entity:
-      drawable = self.entity
-    else:
-      drawable = self
-    libtcod.console_put_char_ex(con, self.x, self.y, drawable.get_char(drawable.x-self.x,drawable.y-self.y), drawable.color, self.bg_color)
+  def draw(self, screen, px, py, font):
+    color = self.color
+    if self.entity:
+        color = self.entity.color
+    if self.hover:
+        color = self.hover_color
+    pygame.draw.rect(screen, self.bg_color, (px, py, 10, 10))
+    if not (self.entity and hasattr(self.entity, 'has_sprites') and self.entity.has_sprites):
+        # Fallback to drawing character if no sprite
+        char = self.char
+        if self.entity:
+            char = self.entity.char
+        surface = font.render(char, True, color)
+        screen.blit(surface, (px, py))
   
   def hover(self, color=concepts.UI_HOVER_DEFAULT):
     self.bg_color = color

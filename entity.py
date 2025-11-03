@@ -1,5 +1,4 @@
 import concepts
-import libtcodpy as libtcod
 import cmath as math
 
 NEUTRAL_SIDE = 555

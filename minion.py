@@ -1,7 +1,7 @@
 from entity import Entity
 from entity import BigEntity
 import concepts
-import libtcodpy as libtcod
+import pygame
 
 import effect
 import tactic
@@ -134,8 +134,7 @@ class Minion(Entity, SpriteEntityMixin):
     # We change the color to indicate that the minion is wounded
     # More red -> closer to death (health-based dynamic coloring)
     c = int(255*(float(self.hp)/self.max_hp))
-    self.color = libtcod.Color(255, c, c)
-    # Note: Dynamic health-based coloring - kept as libtcod.Color for functionality
+    self.color = pygame.Color(255, c, c)
 
 class BigMinion(BigEntity, Minion):
   def __init__(self, battleground, side, x=-1, y=-1, name="Giant", chars=['G']*4, colors=[concepts.ENTITY_DEFAULT]*4):
