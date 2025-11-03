@@ -1,8 +1,7 @@
 from area import SingleTarget
 from battleground import Battleground
 
-import colors
-import CONCEPTS
+import concepts
 import libtcodpy as libtcod
 
 import socket
@@ -82,17 +81,16 @@ class Window(object):
 
     self.game_msgs = []
     self.game_over = False
-    self.area_hover_color = CONCEPTS.UI_HOVER_VALID
-    self.area_hover_color_invalid = CONCEPTS.UI_HOVER_INVALID
-    self.default_hover_color = CONCEPTS.UI_HOVER_DEFAULT
+    self.area_hover_color = concepts.UI_HOVER_VALID
+    self.area_hover_color_invalid = concepts.UI_HOVER_INVALID
+    self.default_hover_color = concepts.UI_HOVER_DEFAULT
     self.default_hover_function = SingleTarget(self.bg).get_all_tiles
     self.hover_function = None
 
     if DEBUG:
       sys.stdout.write("DEBUG: Window.__init__ completed\n")
     
-    # Initial render to show content immediately
-    self.render_all(0, 0)
+    # Note: render_all() should be called by subclasses after their initialization is complete
 
   def ai_action(self, turn):
     return None
@@ -118,7 +116,7 @@ class Window(object):
     else:
       self.bg.hover_tiles(self.default_hover_function(x, y), self.default_hover_color)
 
-  def message(self, new_msg, color=CONCEPTS.UI_TEXT):
+  def message(self, new_msg, color=concepts.UI_TEXT):
     #split the message if necessary, among multiple lines
     new_msg_lines = textwrap.wrap(new_msg, MSG_WIDTH)
     for line in new_msg_lines:
@@ -249,7 +247,7 @@ class Window(object):
   def render_info(self, x, y):
     self.con_info.print(0, 0, " " * INFO_WIDTH)
     if self.bg.is_inside(x, y):
-      self.con_info.print(INFO_WIDTH-7, 0, "%02d/%02d" % (x, y), CONCEPTS.UI_TEXT)
+      self.con_info.print(INFO_WIDTH-7, 0, "%02d/%02d" % (x, y), concepts.UI_TEXT)
       entity = self.bg.tiles[(x, y)].entity
       if entity:
         if(hasattr(entity, 'hp')):
@@ -274,7 +272,7 @@ class Window(object):
     pass
 
   def render_side_panel_clear(self, i, bar_length=11, bar_offset_x=4):
-    libtcod.console_set_default_background(self.con_panels[i], CONCEPTS.UI_BACKGROUND)
+    libtcod.console_set_default_background(self.con_panels[i], concepts.UI_BACKGROUND)
     libtcod.console_rect(self.con_panels[i], bar_offset_x-1, 0, bar_length+1, 40, True, libtcod.BKGND_SET)
 
   def update_all(self):

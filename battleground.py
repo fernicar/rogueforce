@@ -1,6 +1,6 @@
 import entity
 
-import CONCEPTS
+import concepts
 import libtcodpy as libtcod
 import sys
 
@@ -33,7 +33,7 @@ class Battleground(object):
       for y in range(self.height):
         if x in [0, self.width-1] or y in [0, self.height-1]: # Walls
           self.tiles[(x,y)] = Tile(x, y, "#", False)
-          self.tiles[(x,y)].color = CONCEPTS.UI_TEXT  # White walls for visibility
+          self.tiles[(x,y)].color = concepts.UI_TEXT  # White walls for visibility
         else: # Floor
           self.tiles[(x,y)] = Tile(x, y)
           self.tiles[(x,y)].char = '.'  # Keep dot but make it brighter
@@ -52,7 +52,7 @@ class Battleground(object):
     if DEBUG:
       sys.stdout.write(f"DEBUG: Total tiles drawn: {tile_count}\n")
 
-  def hover_tiles(self, l, color=CONCEPTS.UI_HOVER_DEFAULT):
+  def hover_tiles(self, l, color=concepts.UI_HOVER_DEFAULT):
     self.unhover_tiles()
     for t in l:
       t.hover(color)
@@ -74,7 +74,7 @@ class Battleground(object):
         x += 1
     f.close()
     for f in forts:
-      self.fortresses.append(entity.Fortress(self, entity.NEUTRAL_SIDE, f[0], f[1], [self.tiles[f].char]*4, [CONCEPTS.ENTITY_DEFAULT]*4))
+      self.fortresses.append(entity.Fortress(self, entity.NEUTRAL_SIDE, f[0], f[1], [self.tiles[f].char]*4, [concepts.ENTITY_DEFAULT]*4))
 
   def unhover_tiles(self):
     for t in self.hovered:
@@ -84,9 +84,9 @@ class Tile(object):
   def __init__(self, x, y, char='.', passable=True):
     self.passable = passable
     self.char = char
-    self.color = CONCEPTS.UI_TILE_NEUTRAL
-    self.bg_original_color = CONCEPTS.UI_BACKGROUND
-    self.bg_color = CONCEPTS.UI_BACKGROUND
+    self.color = concepts.UI_TILE_NEUTRAL
+    self.bg_original_color = concepts.UI_BACKGROUND
+    self.bg_color = concepts.UI_BACKGROUND
     self.entity = None
     self.effects = []
     self.x = x
@@ -107,7 +107,7 @@ class Tile(object):
       drawable = self
     libtcod.console_put_char_ex(con, self.x, self.y, drawable.get_char(drawable.x-self.x,drawable.y-self.y), drawable.color, self.bg_color)
   
-  def hover(self, color=CONCEPTS.UI_HOVER_DEFAULT):
+  def hover(self, color=concepts.UI_HOVER_DEFAULT):
     self.bg_color = color
 
   def unhover(self):

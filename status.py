@@ -4,7 +4,7 @@ import effect
 import skill
 import tactic
 
-import CONCEPTS
+import concepts
 import libtcodpy as libtcod
 
 import random
@@ -90,7 +90,7 @@ class Bleeding(Status):
     if (self.last_x, self.last_y) != (self.entity.x, self.entity.y):
       diff = max(abs(self.last_x - self.entity.x), abs(self.last_y - self.entity.y))
       self.entity.get_attacked(self.owner, diff*self.power, None, "magical")
-      effect.TempEffect(self.entity.bg, self.entity.side, self.last_x, self.last_y, '*', CONCEPTS.FACTION_DOTO_DARK)
+      effect.TempEffect(self.entity.bg, self.entity.side, self.last_x, self.last_y, '*', concepts.FACTION_DOTO_DARK)
       (self.last_x, self.last_y) = (self.entity.x, self.entity.y)
 
 class Blind(Status):
@@ -156,7 +156,7 @@ class Jumping(Status):
     self.rand.seed(duration)
     self.already_hit = []
     if entity:
-      self.attack_effect = effect.TempEffect(entity.bg, char='-', color=owner.color if owner else CONCEPTS.ENTITY_DEFAULT)
+      self.attack_effect = effect.TempEffect(entity.bg, char='-', color=owner.color if owner else concepts.ENTITY_DEFAULT)
 
   def clone(self, entity):
     return self.__class__(entity, self.owner, self.duration, self.name,
@@ -185,7 +185,7 @@ class Lifted(Status):
     self.land_status = land_status
     self.skill = skill.Skill(owner, skill.apply_status, 0, [land_status], area=land_area)
     if entity:
-      effect.TempEffect(entity.bg, x=entity.x, y=entity.y, char='^', color=owner.color if owner else CONCEPTS.ENTITY_DEFAULT, duration=duration)
+      effect.TempEffect(entity.bg, x=entity.x, y=entity.y, char='^', color=owner.color if owner else concepts.ENTITY_DEFAULT, duration=duration)
 
   def clone(self, entity):
     return self.__class__(entity, self.owner, self.duration, self.name, self.land_area, self.land_status)
@@ -219,9 +219,9 @@ class Linked(Status):
     super(Linked, self).end()
     self.duration = -1
     if self.entity and self.entity.bg and self.tiles:
-      self.entity.bg.tiles[(self.entity.x, self.entity.y)].bg_color = CONCEPTS.UI_BACKGROUND
+      self.entity.bg.tiles[(self.entity.x, self.entity.y)].bg_color = concepts.UI_BACKGROUND
       for t in self.tiles:
-        t.bg_color = CONCEPTS.UI_BACKGROUND
+        t.bg_color = concepts.UI_BACKGROUND
     
   def update(self):
     super(Linked, self).update()
@@ -234,7 +234,7 @@ class Linked(Status):
         self.entity.get_attacked(self)
         self.end()
       else:
-        t.bg_color = libtcod.color_lerp(CONCEPTS.UI_BACKGROUND, self.owner.original_color, 0.4)
+        t.bg_color = libtcod.color_lerp(concepts.UI_BACKGROUND, self.owner.original_color, 0.4)
         # Note: Dynamic color interpolation - appropriate use of libtcod.color_lerp for status effects
 
 class Poison(Status):

@@ -5,7 +5,7 @@ from general import *
 from faction import *
 from window import *
 
-import CONCEPTS
+import concepts
 import libtcodpy as libtcod
 
 import re
@@ -32,6 +32,9 @@ class Scenario(Window):
     self.deploy_general(factions[1].generals[1])
     self.i += 1
     self.deploy_general(factions[1].generals[0])
+    
+    # Initial render after all initialization is complete
+    self.render_all(0, 0)
 
   def apply_requisition(self, general):
     if general.deployed: return
@@ -123,18 +126,18 @@ class Scenario(Window):
                   return
 
   def render_side_panel(self, i, bar_length, bar_offset_x):
-    self.con_panels[i].print(bar_offset_x-1, 0, " Requisition", CONCEPTS.UI_TEXT)
-    self.render_bar(self.con_panels[i], bar_offset_x, 1, bar_length, self.requisition[i], self.max_requisition, CONCEPTS.STATUS_PROGRESS_DARK, CONCEPTS.STATUS_PROGRESS_LIGHT, CONCEPTS.UI_BACKGROUND)
+    self.con_panels[i].print(bar_offset_x-1, 0, " Requisition", concepts.UI_TEXT)
+    self.render_bar(self.con_panels[i], bar_offset_x, 1, bar_length, self.requisition[i], self.max_requisition, concepts.STATUS_PROGRESS_DARK, concepts.STATUS_PROGRESS_LIGHT, concepts.UI_BACKGROUND)
     line = 4
     for j in range(0, len(self.factions[i].generals)):
       g = self.factions[i].generals[j]
-      fg_color = g.color if g == self.selected_general else CONCEPTS.STATUS_SELECTED
+      fg_color = g.color if g == self.selected_general else concepts.STATUS_SELECTED
       self.con_panels[i].print(bar_offset_x-1, line, " " + g.name, fg_color)
-      libtcod.console_put_char_ex(self.con_panels[i], bar_offset_x-1, line+1, KEYMAP_GENERALS[j], g.color, CONCEPTS.UI_BACKGROUND)
+      libtcod.console_put_char_ex(self.con_panels[i], bar_offset_x-1, line+1, KEYMAP_GENERALS[j], g.color, concepts.UI_BACKGROUND)
       if not g.deployed:
-        self.render_bar(self.con_panels[i], bar_offset_x, line+1, bar_length, g.requisition, g.cost, CONCEPTS.STATUS_PROGRESS_DARK, CONCEPTS.STATUS_PROGRESS_LIGHT, CONCEPTS.UI_BACKGROUND)
+        self.render_bar(self.con_panels[i], bar_offset_x, line+1, bar_length, g.requisition, g.cost, concepts.STATUS_PROGRESS_DARK, concepts.STATUS_PROGRESS_LIGHT, concepts.UI_BACKGROUND)
       else: 
-        self.render_bar(self.con_panels[i], bar_offset_x, line+1, bar_length, g.hp, g.max_hp, CONCEPTS.STATUS_HEALTH_LOW, CONCEPTS.STATUS_HEALTH_MEDIUM, CONCEPTS.UI_BACKGROUND)
+        self.render_bar(self.con_panels[i], bar_offset_x, line+1, bar_length, g.hp, g.max_hp, concepts.STATUS_HEALTH_LOW, concepts.STATUS_HEALTH_MEDIUM, concepts.UI_BACKGROUND)
       line += 3
 
   def start_battle(self, generals):

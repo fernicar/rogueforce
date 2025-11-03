@@ -5,12 +5,12 @@ from sieve import *
 from skill import *
 from status import *
 
-import CONCEPTS
+import concepts
 
 import random
 
 class Bloodrotter(General):
-  def __init__(self, battleground, side, x=-1, y=-1, name="Bloodrotter", color=CONCEPTS.FACTION_DOTO_DARK):
+  def __init__(self, battleground, side, x=-1, y=-1, name="Bloodrotter", color=concepts.FACTION_DOTO_DARK):
     super(Bloodrotter, self).__init__(battleground, side, x, y, name, color)
     self.max_hp = 250
     self.power = 11
@@ -51,7 +51,7 @@ class Bloodrotter(General):
     super(Bloodrotter, self).update()
 
 class Ox(General):
-  def __init__(self, battleground, side, x=-1, y=-1, name="Ox", color=CONCEPTS.FACTION_DOTO_MEDIUM):
+  def __init__(self, battleground, side, x=-1, y=-1, name="Ox", color=concepts.FACTION_DOTO_MEDIUM):
     super(Ox, self).__init__(battleground, side, x, y, name, color)
     self.rand = random.Random()
     self.max_hp = 400
@@ -96,7 +96,7 @@ class Ox(General):
       return skill_used
 
 class Pock(General):
-  def __init__(self, battleground, side, x=-1, y=-1, name="Pock", color=CONCEPTS.FACTION_DOTO_LIGHT):
+  def __init__(self, battleground, side, x=-1, y=-1, name="Pock", color=concepts.FACTION_DOTO_LIGHT):
     super(Pock, self).__init__(battleground, side, x, y, name, color)
     self.max_hp = 250
     self.armor["physical"] = 1
@@ -138,7 +138,7 @@ class Pock(General):
     return skill_used
 
 class Rubock(General):
-  def __init__(self, battleground, side, x=-1, y=-1, name="Rubock", color=CONCEPTS.FACTION_DOTO_PURE):
+  def __init__(self, battleground, side, x=-1, y=-1, name="Rubock", color=concepts.FACTION_DOTO_PURE):
     super(Rubock, self).__init__(battleground, side, x, y, name, color)
     self.copied_skill = 2
     self.armor["physical"] = 1

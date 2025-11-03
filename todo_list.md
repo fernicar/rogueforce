@@ -1,0 +1,6 @@
+- [ ] Read scenario.py to understand the code structure and purpose
+- [ ] Run python scenario.py to identify specific errors
+- [ ] Analyze error messages and identify root causes
+- [ ] Fix identified issues in the code
+- [ ] Test the fixed code to ensure it works properly
+- [ ] Verify all functionality works as expected

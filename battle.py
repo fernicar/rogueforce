@@ -3,7 +3,7 @@ from battleground import Battleground
 from general import *
 from window import *
 
-import CONCEPTS
+import concepts
 import libtcodpy as libtcod
 
 import copy
@@ -137,7 +137,7 @@ class BattleWindow(Window):
         skill_index = (y - 5) // 2  # Fixed integer division
         if 0 <= skill_index < len(self.bg.generals[i].skills):
           skill = self.bg.generals[i].skills[skill_index]
-          self.con_info.print(0, 0, skill.description, CONCEPTS.UI_TEXT)
+          self.con_info.print(0, 0, skill.description, concepts.UI_TEXT)
           return
     super(BattleWindow, self).render_info(x, y)
 
@@ -153,19 +153,19 @@ class BattleWindow(Window):
         return color
     
     g_color = get_color_tuple(g.color)
-    black = CONCEPTS.UI_BACKGROUND
+    black = concepts.UI_BACKGROUND
     libtcod.console_put_char_ex(self.con_panels[i], bar_offset_x-1, 1, g.char, g_color, black)
-    self.render_bar(self.con_panels[i], bar_offset_x, 1, bar_length, g.hp, g.max_hp, CONCEPTS.STATUS_HEALTH_LOW, CONCEPTS.STATUS_HEALTH_MEDIUM, black)
+    self.render_bar(self.con_panels[i], bar_offset_x, 1, bar_length, g.hp, g.max_hp, concepts.STATUS_HEALTH_LOW, concepts.STATUS_HEALTH_MEDIUM, black)
     line = 3
     for j in range(0, len(g.skills)):
       skill = g.skills[j]
-      white = CONCEPTS.STATUS_SELECTED
+      white = concepts.STATUS_SELECTED
       libtcod.console_put_char_ex(self.con_panels[i], bar_offset_x-1, line, KEYMAP_SKILLS[j], white, black)
       self.render_bar(self.con_panels[i], bar_offset_x, line, bar_length, skill.cd, skill.max_cd,
-        CONCEPTS.STATUS_PROGRESS_DARK, CONCEPTS.STATUS_PROGRESS_LIGHT, black)
+        concepts.STATUS_PROGRESS_DARK, concepts.STATUS_PROGRESS_LIGHT, black)
       line += 2
     self.con_panels[i].print(3, line+1, str(self.bg.generals[i].minions_alive) + " " + self.bg.generals[i].minion.name + "s  ",
-      CONCEPTS.UI_TEXT)
+      concepts.UI_TEXT)
     line = self.render_tactics(i) + 1
     swap_ready = g.swap_cd >= g.swap_max_cd
     for r in self.bg.reserves[i]:
@@ -173,17 +173,17 @@ class BattleWindow(Window):
       libtcod.console_put_char_ex(self.con_panels[i], bar_offset_x-1, line, r.char, r_color, black)
       if swap_ready:
         self.render_bar(self.con_panels[i], bar_offset_x, line, bar_length, r.hp, r.max_hp,
-                        CONCEPTS.STATUS_HEALTH_LOW, CONCEPTS.STATUS_HEALTH_MEDIUM, black)
+                        concepts.STATUS_HEALTH_LOW, concepts.STATUS_HEALTH_MEDIUM, black)
       else:
         self.render_bar(self.con_panels[i], bar_offset_x, line, bar_length, g.swap_cd, g.swap_max_cd,
-                        CONCEPTS.STATUS_PROGRESS_DARK, CONCEPTS.STATUS_PROGRESS_LIGHT, black)
+                        concepts.STATUS_PROGRESS_DARK, concepts.STATUS_PROGRESS_LIGHT, black)
       line += 2
 
   def render_tactics(self, i):
     bar_offset_x = 3
     line = 7 + len(self.bg.generals[i].skills)*2
     for s in range(0, len(self.bg.generals[i].tactics)):
-      fg_color = CONCEPTS.STATUS_HEALTH_LOW if self.bg.generals[i].tactics[s] == self.bg.generals[i].selected_tactic else CONCEPTS.STATUS_SELECTED
+      fg_color = concepts.STATUS_HEALTH_LOW if self.bg.generals[i].tactics[s] == self.bg.generals[i].selected_tactic else concepts.STATUS_SELECTED
       self.con_panels[i].print(bar_offset_x, line, KEYMAP_TACTICS[s] + ": " + self.bg.generals[i].tactic_quotes[s], fg = fg_color)
       line += 2
     return line

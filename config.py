@@ -1,2 +1,2 @@
 # Global configuration
-DEBUG = True
+DEBUG = False

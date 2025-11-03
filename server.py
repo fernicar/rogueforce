@@ -5,8 +5,11 @@ import time
 from datetime import datetime
 import os
 
+# DEBUG = True  # Set to False to disable debug logging
+from config import DEBUG
+
 MSG_EXIT = "EXIT"
-DEBUG = True  # Set to False to disable debug logging
+
 
 def debug_log(message, level="INFO"):
     """Enhanced logging function with timestamps and debug levels"""
