@@ -1,0 +1,26 @@
+# Command Restrictions
+
+## Prohibited Commands
+
+You MUST NOT use the following commands:
+- `python -c` (inline Python execution)
+- `sed` (stream editor)
+- `grep`
+- `wc`
+
+## Alternative Approach
+
+When you need to perform operations that would typically use these commands, you MUST instead use Cline's built-in tools:
+
+- **For file modifications**: Use `write_to_file` or `replace_in_file` tools
+- **For text processing**: Use `read_file` to read content, process it programmatically, then use `write_to_file` to save changes
+- **For pattern matching**: Use `search_files` with regex patterns
+
+## Rationale
+
+Cline's native tools provide better visibility, error handling, and integration with the development workflow compared to shell commands.
+
+## Response to Prohibited Commands
+
+If a task would typically require `python -c` or `sed`, etc, respond with:
+"I'll use Cline's built-in file tools instead of [command name] for better visibility and control."
