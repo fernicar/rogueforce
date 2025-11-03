@@ -5,12 +5,13 @@ from sieve import *
 from skill import *
 from status import *
 
+import colors
 import libtcodpy as libtcod
 
 import random
 
 class Bloodrotter(General):
-  def __init__(self, battleground, side, x=-1, y=-1, name="Bloodrotter", color=libtcod.darker_red):
+  def __init__(self, battleground, side, x=-1, y=-1, name="Bloodrotter", color=colors.darker_red):
     super(Bloodrotter, self).__init__(battleground, side, x, y, name, color)
     self.max_hp = 250
     self.power = 11
@@ -51,7 +52,7 @@ class Bloodrotter(General):
     super(Bloodrotter, self).update()
 
 class Ox(General):
-  def __init__(self, battleground, side, x=-1, y=-1, name="Ox", color=libtcod.dark_red):
+  def __init__(self, battleground, side, x=-1, y=-1, name="Ox", color=colors.dark_red):
     super(Ox, self).__init__(battleground, side, x, y, name, color)
     self.rand = random.Random()
     self.max_hp = 400
@@ -96,7 +97,7 @@ class Ox(General):
       return skill_used
 
 class Pock(General):
-  def __init__(self, battleground, side, x=-1, y=-1, name="Pock", color=libtcod.sky):
+  def __init__(self, battleground, side, x=-1, y=-1, name="Pock", color=colors.sky):
     super(Pock, self).__init__(battleground, side, x, y, name, color)
     self.max_hp = 250
     self.armor["physical"] = 1
@@ -138,7 +139,7 @@ class Pock(General):
     return skill_used
 
 class Rubock(General):
-  def __init__(self, battleground, side, x=-1, y=-1, name="Rubock", color=libtcod.green):
+  def __init__(self, battleground, side, x=-1, y=-1, name="Rubock", color=colors.green):
     super(Rubock, self).__init__(battleground, side, x, y, name, color)
     self.copied_skill = 2
     self.armor["physical"] = 1

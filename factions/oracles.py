@@ -7,12 +7,13 @@ from sieve import *
 from skill import *
 from status import *
 
+import colors
 import libtcodpy as libtcod
 
 import random
 
 class Slave(Minion):
-  def __init__(self, battleground, side, x=-1, y=-1, name="slave", char='s', color=libtcod.white):
+  def __init__(self, battleground, side, x=-1, y=-1, name="slave", char='s', color=colors.white):
     super(Slave, self).__init__(battleground, side, x, y, name, char, color)
     self.max_hp = 10
     self.hp = 10

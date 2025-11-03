@@ -53,3 +53,93 @@ Probably. I appreciate most kinds of help, from code to game ideas for new gener
 License?
 --------
 The project uses the free ISC license as you can check in the `LICENSE.txt` file. I really dislike the all caps legal text that goes with every single software license so I decided to strip it.
+
+
+# How to Play Rogue Force
+
+Rogue Force is a tactical battle game inspired by Dragon Force, featuring ASCII-style graphics and turn-based strategic combat. Here's everything you need to know:
+
+## Game Overview
+- **Objective**: Defeat the enemy general by reducing their HP to zero
+- **Style**: Turn-based tactical combat with roguelike ASCII graphics
+- **Setting**: Space-themed battles with different factions and generals
+- **Controls**: Keyboard + mouse (right-click for special actions)
+
+## Starting the Game
+```bash
+python battle.py 0  # Play as Player 0 (left side) vs AI
+python battle.py 1  # Play as Player 1 (right side) vs AI
+```
+
+## Interface Layout
+- **Main Battlefield**: 60x43 grid in the center where units move and battle
+- **Left/Right Panels**: Show your and enemy general's stats, skills, and reserves
+- **Bottom Messages**: Combat log and feedback
+- **Top Info**: Current tile info and general status
+
+## Controls
+
+### Skill Management
+- **Q-W-E-R-T-Y-U-I-O-P**: Use skills 1-10
+  - **Uppercase (Q)**: Preview skill area of effect (mouse position determines target)
+  - **Lowercase (q)**: Actually use the skill at mouse position
+- **1-9**: Swap to reserve units (when cooldown allows)
+
+### Tactics
+- **Z-C-V-B-N-M**: Use tactics 1-6
+- **Spacebar**: Switch between current and previous tactic
+
+### Actions
+- **S**: Stop all current actions
+- **Right Mouse Click**: Place flag/marker on battlefield
+- **Mouse Movement**: Position affects skill targeting and shows hover effects
+
+## Available Generals
+
+### Doto Faction (Default)
+1. **Pock** (Blue): Wizard with teleport and magic orb abilities
+2. **Rubock** (Green): Telekinetic with spell stealing capabilities  
+3. **Bloodrotter** (Red): Blood-powered fighter with rage mechanics
+4. **Ox** (Dark Red): Berserker with taunt and counter-attack skills
+
+### Wizerds Faction
+- **Starcall** (Cyan): Cosmic powers with lightning and black hole abilities
+
+## Gameplay Mechanics
+
+### Combat System
+- Each general has HP, power, armor, and unique skills
+- Skills have cooldowns and various effects (damage, healing, status effects)
+- Minions can be summoned and controlled
+- Turn-based system with action queues
+
+### Status Effects
+- **Buffs**: Empowerment, shielding, speed increases
+- **Debuffs**: Poison, weakness, silence, stun
+- **Armor**: Physical and magical damage reduction
+
+### Skill Types
+- **Single Target**: Damage/heal one enemy/ally
+- **Area Effects**: Damage/heal in radius around target
+- **Summons**: Create entities like magic orbs
+- **Status Effects**: Apply temporary conditions
+
+### Reserves System
+- Multiple generals available per side
+- Swap between active general and reserves (limited by cooldown)
+- Each reserve has unique abilities and stats
+
+## Strategy Tips
+1. **Skill Management**: Balance offensive and defensive abilities
+2. **Positioning**: Use area effects strategically
+3. **Cooldown Timing**: Plan skill usage around cooldowns
+4. **Resource Management**: Monitor HP and power levels
+5. **Reserve Timing**: Use swaps for tactical advantages
+
+## Network Multiplayer
+For multiplayer battles:
+1. Start server: `python server.py [port]`
+2. Player 1: `python battle.py 0 [server_address] [port]`
+3. Player 2: `python battle.py 1 [server_address] [port+1]`
+
+The game is still in early development with limited AI, so expect some rough edges but enjoy the strategic depth!

@@ -1,6 +1,8 @@
 from area import SingleTarget
 from battleground import Battleground
 
+import colors
+import colors
 import libtcodpy as libtcod
 
 import socket
@@ -45,18 +47,18 @@ class Window(object):
 
     self.messages = [{}, {}]
 
-    self.con_root = libtcod.console.Console(SCREEN_WIDTH, SCREEN_HEIGHT)
-    self.con_bg = libtcod.console.Console(BG_WIDTH, BG_HEIGHT)
-    self.con_info = libtcod.console.Console(INFO_WIDTH, INFO_HEIGHT)
-    self.con_msgs = libtcod.console.Console(MSG_WIDTH, MSG_HEIGHT)
-    self.con_panels = [libtcod.console.Console(PANEL_WIDTH, PANEL_HEIGHT),
-                       libtcod.console.Console(PANEL_WIDTH, PANEL_HEIGHT)]
+    self.con_root = libtcod.console_new(SCREEN_WIDTH, SCREEN_HEIGHT)
+    self.con_bg = libtcod.console_new(BG_WIDTH, BG_HEIGHT)
+    self.con_info = libtcod.console_new(INFO_WIDTH, INFO_HEIGHT)
+    self.con_msgs = libtcod.console_new(MSG_WIDTH, MSG_HEIGHT)
+    self.con_panels = [libtcod.console_new(PANEL_WIDTH, PANEL_HEIGHT),
+                       libtcod.console_new(PANEL_WIDTH, PANEL_HEIGHT)]
 
     self.game_msgs = []
     self.game_over = False
-    self.area_hover_color = libtcod.green
-    self.area_hover_color_invalid = libtcod.red
-    self.default_hover_color = libtcod.blue
+    self.area_hover_color = colors.green
+    self.area_hover_color_invalid = colors.red
+    self.default_hover_color = colors.blue
     self.default_hover_function = SingleTarget(self.bg).get_all_tiles
     self.hover_function = None
 
@@ -86,7 +88,7 @@ class Window(object):
     else:
       self.bg.hover_tiles(self.default_hover_function(x, y), self.default_hover_color)
 
-  def message(self, new_msg, color=libtcod.white):
+  def message(self, new_msg, color=colors.white):
     #split the message if necessary, among multiple lines
     new_msg_lines = textwrap.wrap(new_msg, MSG_WIDTH)
     for line in new_msg_lines:
@@ -121,6 +123,9 @@ class Window(object):
         libtcod.sys_check_for_event(libtcod.EVENT_ANY, key, mouse)
         (x, y) = (mouse.cx-BG_OFFSET_X, mouse.cy-BG_OFFSET_Y)
         if key.vk == libtcod.KEY_ESCAPE:
+          return None
+        # Check if window close button was clicked
+        if libtcod.console_is_window_closed():
           return None
         s = self.check_input(key, libtcod.mouse_get_status(), x, y)
         if s is not None:
@@ -169,7 +174,7 @@ class Window(object):
   def render_info(self, x, y):
     self.con_info.print(0, 0, " " * INFO_WIDTH)
     if self.bg.is_inside(x, y):
-      self.con_info.print(INFO_WIDTH-7, 0, "%02d/%02d" % (x, y), libtcod.white)
+      self.con_info.print(INFO_WIDTH-7, 0, "%02d/%02d" % (x, y), colors.white)
       entity = self.bg.tiles[(x, y)].entity
       if entity:
         if(hasattr(entity, 'hp')):
@@ -194,7 +199,7 @@ class Window(object):
     pass
 
   def render_side_panel_clear(self, i, bar_length=11, bar_offset_x=4):
-    libtcod.console_set_default_background(self.con_panels[i], libtcod.black)
+    libtcod.console_set_default_background(self.con_panels[i], colors.black)
     libtcod.console_rect(self.con_panels[i], bar_offset_x-1, 0, bar_length+1, 40, True, libtcod.BKGND_SET)
 
   def update_all(self):
@@ -211,8 +216,10 @@ class Network(object):
     self.s.connect((host, port))
 
   def recv(self):
-    return self.s.recv(1024)
+    data = self.s.recv(1024)
+    return data.decode('utf-8') if isinstance(data, bytes) else data
 
   def send(self, data):
+    if isinstance(data, str):
+      data = data.encode('utf-8')
     self.s.send(data)
-

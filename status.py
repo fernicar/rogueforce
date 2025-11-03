@@ -4,6 +4,7 @@ import effect
 import skill
 import tactic
 
+import colors
 import libtcodpy as libtcod
 
 import random
@@ -81,7 +82,7 @@ class Bleeding(Status):
     if (self.last_x, self.last_y) != (self.entity.x, self.entity.y):
       diff = max(abs(self.last_x - self.entity.x), abs(self.last_y - self.entity.y))
       self.entity.get_attacked(self.owner, diff*self.power, None, "magical")
-      effect.TempEffect(self.entity.bg, self.entity.side, self.last_x, self.last_y, '*', libtcod.darker_red)
+      effect.TempEffect(self.entity.bg, self.entity.side, self.last_x, self.last_y, '*', colors.darker_red)
       (self.last_x, self.last_y) = (self.entity.x, self.entity.y)
 
 class Blind(Status):
@@ -143,7 +144,7 @@ class Jumping(Status):
     self.rand.seed(duration)
     self.already_hit = []
     if entity:
-      self.attack_effect = effect.TempEffect(entity.bg, char='-', color=owner.color if owner else libtcod.white)
+      self.attack_effect = effect.TempEffect(entity.bg, char='-', color=owner.color if owner else colors.white)
 
   def clone(self, entity):
     return self.__class__(entity, self.owner, self.duration, self.name,
@@ -200,9 +201,9 @@ class Linked(Status):
   def end(self):
     super(Linked, self).end()
     self.duration = -1
-    self.entity.bg.tiles[(self.entity.x, self.entity.y)].bg_color = libtcod.black
+    self.entity.bg.tiles[(self.entity.x, self.entity.y)].bg_color = colors.black
     for t in self.tiles:
-      t.bg_color = libtcod.black
+      t.bg_color = colors.black
     
   def update(self):
     super(Linked, self).update()
@@ -213,7 +214,7 @@ class Linked(Status):
         self.entity.get_attacked(self)
         self.end()
       else:
-        t.bg_color = libtcod.color_lerp(libtcod.black, self.owner.original_color, 0.4)
+        t.bg_color = libtcod.color_lerp(colors.black, self.owner.original_color, 0.4)
 
 class Poison(Status):
   # tbt = time between ticks

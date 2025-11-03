@@ -7,12 +7,13 @@ from status import *
 import effect
 import tactic
 
+import colors
 import libtcodpy as libtcod
 
 import math
 
 class General(Minion):
-  def __init__(self, battleground, side, x=-1, y=-1, name="General", color=libtcod.orange):
+  def __init__(self, battleground, side, x=-1, y=-1, name="General", color=colors.orange):
     super(General, self).__init__(battleground, side, x, y, name, name[0], color)
     self.max_hp = 300
     self.cost = 250
@@ -139,7 +140,7 @@ class General(Minion):
     return False
 
 class Conway(General):
-  def __init__(self, battleground, side, x=-1, y=-1, name="Conway", color=libtcod.green):
+  def __init__(self, battleground, side, x=-1, y=-1, name="Conway", color=colors.green):
     super(Conway, self).__init__(battleground, side, x, y, name, color)
     self.death_quote = "This is more like a game of... death"
     self.tactics = [tactic.stop, tactic.null]
@@ -193,7 +194,7 @@ class Conway(General):
     super(Conway, self).update()
 
 class Emperor(General):
-  def __init__(self, battleground, side, x=-1, y=-1, name="Emperor", color=libtcod.sepia):
+  def __init__(self, battleground, side, x=-1, y=-1, name="Emperor", color=colors.sepia):
     super(Emperor, self).__init__(battleground, side, x, y, name, color)
     self.max_hp = 60
     #self.start_quote = "May this night carry my will and these old stars forever remember this night."

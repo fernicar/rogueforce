@@ -1,5 +1,6 @@
 import entity
 
+import colors
 import libtcodpy as libtcod
 
 import os
@@ -38,7 +39,7 @@ class Battleground(object):
     for pos in self.tiles:
       self.tiles[pos].draw(con)
 
-  def hover_tiles(self, l, color=libtcod.blue):
+  def hover_tiles(self, l, color=colors.blue):
     self.unhover_tiles()
     for t in l:
       t.hover(color)
@@ -60,7 +61,7 @@ class Battleground(object):
         x += 1
     f.close()
     for f in forts:
-      self.fortresses.append(entity.Fortress(self, entity.NEUTRAL_SIDE, f[0], f[1], [self.tiles[f].char]*4, [libtcod.white]*4))
+      self.fortresses.append(entity.Fortress(self, entity.NEUTRAL_SIDE, f[0], f[1], [self.tiles[f].char]*4, [colors.white]*4))
 
   def unhover_tiles(self):
     for t in self.hovered:
@@ -71,8 +72,8 @@ class Tile(object):
     self.passable = passable
     self.char = char
     self.color = libtcod.Color(50, 50, 150)
-    self.bg_original_color = libtcod.black
-    self.bg_color = libtcod.black
+    self.bg_original_color = colors.black
+    self.bg_color = colors.black
     self.entity = None
     self.effects = []
     self.x = x
@@ -93,7 +94,7 @@ class Tile(object):
       drawable = self
     libtcod.console_put_char_ex(con, self.x, self.y, drawable.get_char(drawable.x-self.x,drawable.y-self.y), drawable.color, self.bg_color)
   
-  def hover(self, color=libtcod.blue):
+  def hover(self, color=colors.blue):
     self.bg_color = color
 
   def unhover(self):

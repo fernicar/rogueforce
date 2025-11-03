@@ -5,10 +5,11 @@ from effect import *
 from math import copysign
 import tactic
 
+import colors
 import libtcodpy as libtcod
 
 class Ares(General):
-  def __init__(self, battleground, side, x=-1, y=-1, name="Ares", color=libtcod.red):
+  def __init__(self, battleground, side, x=-1, y=-1, name="Ares", color=colors.red):
     super(Ares, self).__init__(battleground, side, x, y, name, color)
     self.max_hp = 200
     self.death_quote = "I lost a battle, but..."

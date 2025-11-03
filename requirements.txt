@@ -1,4 +1,7 @@
-cffi==1.14.4
-numpy==1.19.4
-pycparser==2.20
-tcod==11.18.0
+setuptools==80.9.0
+wheel==0.45.1
+typing_extensions==4.15.0
+cffi==2.0.0
+numpy==2.3.4
+pycparser==2.23
+tcod==19.6.0

@@ -4,12 +4,13 @@ from sieve import *
 from skill import *
 from status import *
 
+import colors
 import libtcodpy as libtcod
 
 import random
 
 class Starcall(General):
-  def __init__(self, battleground, side, x=-1, y=-1, name="Starcall", color=libtcod.cyan):
+  def __init__(self, battleground, side, x=-1, y=-1, name="Starcall", color=colors.cyan):
     super(Starcall, self).__init__(battleground, side, x, y, name, color)
     self.rand = random.Random()
    

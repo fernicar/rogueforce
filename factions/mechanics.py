@@ -5,10 +5,11 @@ from minion import Minion, BigMinion
 from skill import *
 import sieve
 
+import colors
 import libtcodpy as libtcod
 
 class Flappy(General):
-  def __init__(self, battleground, side, x=-1, y=-1, name="Flappy", color=libtcod.dark_green):
+  def __init__(self, battleground, side, x=-1, y=-1, name="Flappy", color=colors.dark_green):
     super(Flappy, self).__init__(battleground, side, x, y, name, color)
     self.death_quote = "I'll be back, like a boo... me..."
     self.minion = Minion(self.bg, self.side, name="goblin")
@@ -36,7 +37,7 @@ class Flappy(General):
     self.boomerang = Bouncing(self.bg, char="(" if self.side else ")")
     self.gobmerang = Pathing(self.bg, self.side, self.x + (-3 if self.side else 3), self.y, char='G')
     self.slingshot = BigMinion(self.bg, self.side, self.x + (-4 if self.side else 2), self.y-1, name="Slingmerang",
-                               chars=list("//>\\~ ~\\|") if self.side else list("//|\\~ ~\\<"), colors=[libtcod.white]*9)
+                               chars=list("//>\\~ ~\\|") if self.side else list("//|\\~ ~\\<"), colors=[colors.white]*9)
     self.draw_slingshot()
     self.slingshot_drawn = False
     self.gobmerang_shot = False

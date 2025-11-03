@@ -1,5 +1,6 @@
 from entity import Entity
 from entity import BigEntity
+import colors
 import libtcodpy as libtcod
 
 import effect
@@ -8,7 +9,7 @@ import tactic
 from collections import defaultdict
 
 class Minion(Entity):
-  def __init__(self, battleground, side, x=-1, y=-1, name="minion", char='m', color=libtcod.white):
+  def __init__(self, battleground, side, x=-1, y=-1, name="minion", char='m', color=colors.white):
     super(Minion, self).__init__(battleground, side, x, y, char, color)
     self.name = name
     self.max_hp = 30
@@ -90,7 +91,7 @@ class Minion(Entity):
     self.color = libtcod.Color(255, c, c)
 
 class BigMinion(BigEntity, Minion):
-  def __init__(self, battleground, side, x=-1, y=-1, name="Giant", chars=['G']*4, colors=[libtcod.white]*4):
+  def __init__(self, battleground, side, x=-1, y=-1, name="Giant", chars=['G']*4, colors=[colors.white]*4):
     BigEntity.__init__(self, battleground, side, x, y, chars, colors)
     Minion.__init__(self, battleground, side, x, y, name, colors[0])
     self.max_hp *= self.length
@@ -114,7 +115,7 @@ class BigMinion(BigEntity, Minion):
     return None
 
 class RangedMinion(Minion):
-  def __init__(self, battleground, side, x=-1, y=-1, name="archer", color=libtcod.white, attack_effects = ['>', '<']):
+  def __init__(self, battleground, side, x=-1, y=-1, name="archer", color=colors.white, attack_effects = ['>', '<']):
     super(RangedMinion, self).__init__(battleground, side, x, y, name)
     self.max_hp = 10
     self.hp = 10

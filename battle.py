@@ -3,6 +3,7 @@ from battleground import Battleground
 from general import *
 from window import *
 
+import colors
 import libtcodpy as libtcod
 
 import copy
@@ -13,8 +14,8 @@ KEYMAP_SKILLS = "QWERTYUIOP"
 KEYMAP_SWAP = "123456789"
 KEYMAP_TACTICS = "ZXCVBNM"
 
-FLAG_PATTERN = re.compile("flag \((-?\d+),(-?\d+)\)")
-SKILL_PATTERN = re.compile("skill(\d) \((-?\d+),(-?\d+)\)")
+FLAG_PATTERN = re.compile(r"flag \((-?\d+),(-?\d+)\)")
+SKILL_PATTERN = re.compile(r"skill(\d) \((-?\d+),(-?\d+)\)")
 
 DEBUG = False
 
@@ -45,7 +46,7 @@ class BattleWindow(Window):
       return "swap{0}\n".format(n)
     n = self.keymap_skills.find(chr(key.c).upper()) # Number of the skill pressed
     if n != -1: 
-      if chr(key.c).istitle(): # With uppercase we show the area
+      if chr(key.c).isupper(): # With uppercase we show the area
         self.hover_function = self.bg.generals[self.side].skills[n].get_area_tiles
       else: # Use the skill
         self.hover_function = None
@@ -61,7 +62,6 @@ class BattleWindow(Window):
         self.bg.generals[self.side].previous_tactic = self.bg.generals[self.side].selected_tactic
       n = self.keymap_tactics.find(chr(key.c).upper()) # Number of the tactic pressed
     if n != -1:
-      last_Tactic = n
       return "tactic{0}\n".format(n)
     return None
 
@@ -115,50 +115,65 @@ class BattleWindow(Window):
 
   def render_info(self, x, y):
     self.con_info.print(0, 0, " " * INFO_WIDTH)
-    nskills = len(self.bg.generals[1].skills)
-    i=-1
+    i = -1
     if -13 < x < -1:
       i = 0
-    elif BG_WIDTH + + 1 < x < BG_WIDTH + + 13:
+    elif BG_WIDTH + 1 < x < BG_WIDTH + 13:
       i = 1
     
-    nskills = len(self.bg.generals[i].skills)
-    if (5 + nskills * 2) > y > 3 and i != -1:
-      skill = self.bg.generals[i].skills[(y-5)/2]
-      self.con_info.print(0, 0, skill.description, libtcod.white)
-    else:
-      super(BattleWindow, self).render_info(x, y)
+    if i != -1:
+      nskills = len(self.bg.generals[i].skills)
+      if (5 + nskills * 2) > y > 3:
+        skill_index = (y - 5) // 2  # Fixed integer division
+        if 0 <= skill_index < len(self.bg.generals[i].skills):
+          skill = self.bg.generals[i].skills[skill_index]
+          self.con_info.print(0, 0, skill.description, colors.white)
+          return
+    super(BattleWindow, self).render_info(x, y)
 
   def render_side_panel(self, i, bar_length, bar_offset_x):
     g = self.bg.generals[i]
-    libtcod.console_put_char_ex(self.con_panels[i], bar_offset_x-1, 1, g.char, g.color, libtcod.black)
-    self.render_bar(self.con_panels[i], bar_offset_x, 1, bar_length, g.hp, g.max_hp, libtcod.red, libtcod.yellow, libtcod.black)
+    # Convert colors to tuples for libtcod compatibility
+    def get_color_tuple(color):
+      if hasattr(color, 'r'):  # tcod Color object
+        return (color.r, color.g, color.b)
+      elif isinstance(color, tuple) and len(color) == 3:
+        return color
+      else:
+        return color
+    
+    g_color = get_color_tuple(g.color)
+    black = colors.black
+    libtcod.console_put_char_ex(self.con_panels[i], bar_offset_x-1, 1, g.char, g_color, black)
+    self.render_bar(self.con_panels[i], bar_offset_x, 1, bar_length, g.hp, g.max_hp, colors.red, colors.yellow, black)
     line = 3
     for j in range(0, len(g.skills)):
       skill = g.skills[j]
-      libtcod.console_put_char_ex(self.con_panels[i], bar_offset_x-1, line, KEYMAP_SKILLS[j], libtcod.white, libtcod.black)
+      white = colors.white
+      libtcod.console_put_char_ex(self.con_panels[i], bar_offset_x-1, line, KEYMAP_SKILLS[j], white, black)
       self.render_bar(self.con_panels[i], bar_offset_x, line, bar_length, skill.cd, skill.max_cd,
-        libtcod.dark_blue, libtcod.sky, libtcod.black)
+        colors.dark_blue, colors.sky, black)
       line += 2
     self.con_panels[i].print(3, line+1, str(self.bg.generals[i].minions_alive) + " " + self.bg.generals[i].minion.name + "s  ",
-      libtcod.white)
+      colors.white)
     line = self.render_tactics(i) + 1
     swap_ready = g.swap_cd >= g.swap_max_cd
     for r in self.bg.reserves[i]:
-      libtcod.console_put_char_ex(self.con_panels[i], bar_offset_x-1, line, r.char, r.color, libtcod.black)
+      r_color = get_color_tuple(r.color)
+      libtcod.console_put_char_ex(self.con_panels[i], bar_offset_x-1, line, r.char, r_color, black)
       if swap_ready:
         self.render_bar(self.con_panels[i], bar_offset_x, line, bar_length, r.hp, r.max_hp,
-                        libtcod.red, libtcod.yellow, libtcod.black)
+                        colors.red, colors.yellow, black)
       else:
         self.render_bar(self.con_panels[i], bar_offset_x, line, bar_length, g.swap_cd, g.swap_max_cd,
-                        libtcod.dark_blue, libtcod.sky, libtcod.black)
+                        colors.dark_blue, colors.sky, black)
       line += 2
 
   def render_tactics(self, i):
     bar_offset_x = 3
     line = 7 + len(self.bg.generals[i].skills)*2
     for s in range(0, len(self.bg.generals[i].tactics)):
-      fg_color = libtcod.red if self.bg.generals[i].tactics[s] == self.bg.generals[i].selected_tactic else libtcod.white
+      fg_color = colors.red if self.bg.generals[i].tactics[s] == self.bg.generals[i].selected_tactic else colors.white
       self.con_panels[i].print(bar_offset_x, line, KEYMAP_TACTICS[s] + ": " + self.bg.generals[i].tactic_quotes[s], fg = fg_color)
       line += 2
     return line
