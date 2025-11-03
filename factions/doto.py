@@ -5,13 +5,11 @@ from sieve import *
 from skill import *
 from status import *
 
-import concepts
-
 import random
 
 class Bloodrotter(General):
-  def __init__(self, battleground, side, x=-1, y=-1, name="Bloodrotter", color=concepts.FACTION_DOTO_DARK):
-    super(Bloodrotter, self).__init__(battleground, side, x, y, name, color)
+  def __init__(self, battleground, side, x=-1, y=-1, name="Bloodrotter", sprite_name="bloodrotter"):
+    super(Bloodrotter, self).__init__(battleground, side, x, y, name, sprite_name)
     self.max_hp = 250
     self.power = 11
     self.thirst_charges = 0
@@ -28,7 +26,7 @@ class Bloodrotter(General):
                       SingleTarget(self.bg, is_unit, self, is_inrange_close)))
     self.skills.append(DummySkill("Blood Bath", "Gain health for every unit killed"))
     self.skills.append(DummySkill("Thirst", "Gets damage and speed based on enemy's missing health"))
-    self.skills.append(Skill(self, nuke_statuses, 140, [40, TempEffect(self.bg, char='*', color=self.color),
+    self.skills.append(Skill(self, nuke_statuses, 140, [40, TempEffect(self.bg, sprite_name='rupture'),
                        "magical", [Bleeding(owner=self, power=30, duration=40, name="Rupture")]],
                        "Rupture", "Deals initial damage plus extra damage if the unit moves",
                        SingleTarget(self.bg, is_enemy, self, is_inrange_close)))
@@ -51,8 +49,8 @@ class Bloodrotter(General):
     super(Bloodrotter, self).update()
 
 class Ox(General):
-  def __init__(self, battleground, side, x=-1, y=-1, name="Ox", color=concepts.FACTION_DOTO_MEDIUM):
-    super(Ox, self).__init__(battleground, side, x, y, name, color)
+  def __init__(self, battleground, side, x=-1, y=-1, name="Ox", sprite_name="ox"):
+    super(Ox, self).__init__(battleground, side, x, y, name, sprite_name)
     self.rand = random.Random()
     self.max_hp = 400
     self.helix_index = 2
@@ -96,11 +94,11 @@ class Ox(General):
       return skill_used
 
 class Pock(General):
-  def __init__(self, battleground, side, x=-1, y=-1, name="Pock", color=concepts.FACTION_DOTO_LIGHT):
-    super(Pock, self).__init__(battleground, side, x, y, name, color)
+  def __init__(self, battleground, side, x=-1, y=-1, name="Pock", sprite_name="pock"):
+    super(Pock, self).__init__(battleground, side, x, y, name, sprite_name)
     self.max_hp = 250
     self.armor["physical"] = 1
-    self.orb = Orb(self.bg, self.side, char='o', color=self.color)
+    self.orb = Orb(self.bg, self.side, sprite_name='orb')
     self.orb_index = 0
     self.jaunt_index = 4
 
@@ -109,7 +107,7 @@ class Pock(General):
     self.skills.append(Skill(self, place_entity, 80, [self.orb], "Illusory Orb",
                        "Launches a magic orb that damages and might be teleported into",
                        SingleTarget(self.bg, general=self, reach_function=is_inrange_long, selfcentered=True)))
-    self.skills.append(Skill(self, nuke_statuses, 60, [15, TempEffect(self.bg, char='`', color=self.color),
+    self.skills.append(Skill(self, nuke_statuses, 60, [15, TempEffect(self.bg, sprite_name='waning_rift'),
                        "magical", [FreezeCooldowns(None, self, 20, "Waning Rift silence")]],
                        "Waning Rift", "Deals damage and silences enemy units nearby",
                        Circle(self.bg, is_enemy, self, selfcentered=True, radius=2)))
@@ -138,8 +136,8 @@ class Pock(General):
     return skill_used
 
 class Rubock(General):
-  def __init__(self, battleground, side, x=-1, y=-1, name="Rubock", color=concepts.FACTION_DOTO_PURE):
-    super(Rubock, self).__init__(battleground, side, x, y, name, color)
+  def __init__(self, battleground, side, x=-1, y=-1, name="Rubock", sprite_name="rubock"):
+    super(Rubock, self).__init__(battleground, side, x, y, name, sprite_name)
     self.copied_skill = 2
     self.armor["physical"] = 1
 

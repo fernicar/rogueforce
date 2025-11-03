@@ -7,21 +7,18 @@ from sieve import *
 from skill import *
 from status import *
 
-import concepts
-import libtcodpy as libtcod
-
 import random
 
 class Slave(Minion):
-  def __init__(self, battleground, side, x=-1, y=-1, name="slave", char='s', color=concepts.ENTITY_DEFAULT):
-    super(Slave, self).__init__(battleground, side, x, y, name, char, color)
+  def __init__(self, battleground, side, x=-1, y=-1, name="slave", sprite_name='slave'):
+    super(Slave, self).__init__(battleground, side, x, y, name, sprite_name)
     self.max_hp = 10
     self.hp = 10
     self.power = 3
 
 class Gemekaa(General):
-  def __init__(self, battleground, side, x=-1, y=-1, name="Gemekaa", color=concepts.FACTION_ORACLE):
-    super(Gemekaa, self).__init__(battleground, side, x, y, name, color)
+  def __init__(self, battleground, side, x=-1, y=-1, name="Gemekaa", sprite_name="gemekaa"):
+    super(Gemekaa, self).__init__(battleground, side, x, y, name, sprite_name)
     self.max_hp = 70
     self.death_quote = "I did not foresee this..."
     self.formation = formation.InvertedWedge(self, 3)

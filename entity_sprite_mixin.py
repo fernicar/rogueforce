@@ -1,4 +1,3 @@
-import pygame
 from sprite_animator import SpriteAnimator, AnimationState
 from asset_manager import asset_manager
 from config import DEBUG, SPRITE_SCALE_GENERAL, CAMERA_VIEW_BATTLE
@@ -64,6 +63,7 @@ class SpriteEntityMixin:
             should_mirror = (self.side == 1)
 
             if should_mirror and sprite:
+                import pygame
                 return pygame.transform.flip(sprite, True, False)
 
         return sprite

@@ -5,20 +5,15 @@ from minion import Minion, BigMinion
 from skill import *
 import sieve
 
-import concepts
-import libtcodpy as libtcod
-
 class Flappy(General):
-  def __init__(self, battleground, side, x=-1, y=-1, name="Flappy", color=concepts.FACTION_MECHANICS):
-    super(Flappy, self).__init__(battleground, side, x, y, name, color)
+  def __init__(self, battleground, side, x=-1, y=-1, name="Flappy", sprite_name="flappy"):
+    super(Flappy, self).__init__(battleground, side, x, y, name, sprite_name)
     self.death_quote = "I'll be back, like a boo... me..."
-    self.minion = Minion(self.bg, self.side, name="goblin")
+    self.minion = Minion(self.bg, self.side, name="goblin", sprite_name="goblin")
 
   def draw_slingshot(self):
-    if self.side:
-      self.slingshot.chars[2], self.slingshot.chars[5] = self.slingshot.chars[5], self.slingshot.chars[2]
-    else:
-      self.slingshot.chars[8], self.slingshot.chars[5] = self.slingshot.chars[5], self.slingshot.chars[8]
+    if self.slingshot.animator:
+        self.slingshot.animator.set_animation('draw')
 
   def initialize_skills(self):
     self.skills = []
@@ -34,10 +29,9 @@ class Flappy(General):
                              CustomArea(self.bg, tiles=Circle(self.bg, radius=4).get_all_tiles(self.slingshot.x+1, self.slingshot.y+1))))
 
   def start_battle(self):
-    self.boomerang = Bouncing(self.bg, char="(" if self.side else ")")
-    self.gobmerang = Pathing(self.bg, self.side, self.x + (-3 if self.side else 3), self.y, char='G')
-    self.slingshot = BigMinion(self.bg, self.side, self.x + (-4 if self.side else 2), self.y-1, name="Slingmerang",
-                               chars=list("//>\\~ ~\\|") if self.side else list("//|\\~ ~\\<"), colors=[concepts.ENTITY_DEFAULT]*9)
+    self.boomerang = Bouncing(self.bg, sprite_name="boomerang")
+    self.gobmerang = Pathing(self.bg, self.side, self.x + (-3 if self.side else 3), self.y, sprite_name='gobmerang')
+    self.slingshot = BigMinion(self.bg, self.side, self.x + (-4 if self.side else 2), self.y-1, name="Slingmerang", sprite_name="slingshot")
     self.draw_slingshot()
     self.slingshot_drawn = False
     self.gobmerang_shot = False

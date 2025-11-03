@@ -619,10 +619,6 @@ if __name__ == "__main__":
 pip install pillow pygame
 ```
 
-### Step 1a: Update `requirements.txt`
-
-Remove `tcod` from `requirements.txt`.
-
 ### Step 2: Create Asset Structure
 
 ```bash
@@ -652,20 +648,6 @@ Create the following new files with the code provided above:
 **minion.py**: Enhance with sprite methods as shown
 
 **general.py**: Add sprite initialization
-
-**window.py**: Refactor the `Window` class to use `pygame` for all rendering and input handling. This will involve creating a `pygame` screen, and removing all `libtcod` code.
-
-**battle.py** and **scenario.py**: Rewrite the rendering methods in both files to use the new `pygame`-based UI helpers in `window.py`.
-
-### Step 4a: UI Implementation with Pygame
-
-**window.py**:
-- Create a `draw_text` method that uses `pygame.font` to render text.
-- Create a `draw_bar` method that uses `pygame.draw.rect` to render UI bars.
-- Rewrite the `loop` method to handle all input using `pygame.event.get()`.
-
-**battle.py** and **scenario.py**:
-- Use the new `draw_text` and `draw_bar` methods to reimplement `render_side_panel`, `render_info`, and `render_msgs`.
 
 ### Step 5: Sprite Naming Convention
 

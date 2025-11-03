@@ -1,19 +1,22 @@
-import concepts
+import pygame
+from asset_manager import AssetManager
 import cmath as math
 
 NEUTRAL_SIDE = 555
 
 class Entity(object):
-  def __init__(self, battleground, side=NEUTRAL_SIDE, x=-1, y=-1, char=' ', color=concepts.ENTITY_DEFAULT):
+  def __init__(self, battleground, side=NEUTRAL_SIDE, x=-1, y=-1, sprite_name=None, name="Entity"):
     self.bg = battleground
     self.x = x
     self.y = y
     self.side = side
-    self.char = char
-    self.original_char = char
-    self.color = color
-    self.original_color = color
-    self.bg.tiles[(x, y)].entity = self
+    self.name = name
+    self.sprite_name = sprite_name
+    self.animator = AssetManager.get_animator(sprite_name) if sprite_name else None
+
+    if x != -1 and y != -1:
+        self.bg.tiles[(x, y)].entity = self
+
     self.default_next_action = 5
     self.next_action = self.default_next_action
     self.pushed = False
@@ -40,23 +43,22 @@ class Entity(object):
     return next_tile.entity.can_be_pushed(dx, dy)
 
   def change_battleground(self, bg, x, y):
-    self.bg.tiles[(self.x, self.y)].entity = None
+    if self.x != -1 and self.y != -1:
+        self.bg.tiles[(self.x, self.y)].entity = None
     self.bg = bg
     (self.x, self.y) = (x, y)
     self.bg.tiles[(self.x, self.y)].entity = self
 
   def clone(self, x, y): 
     if self.bg.is_inside(x, y) and self.bg.tiles[(x, y)].entity is None and self.bg.tiles[(x, y)].is_passable(self):
-      return self.__class__(self.bg, self.side, x, y, self.char, self.original_color)
+      return self.__class__(self.bg, self.side, x, y, self.sprite_name, self.name)
     return None
 
   def die(self):
-    self.bg.tiles[(self.x, self.y)].entity = None
+    if self.x != -1 and self.y != -1:
+        self.bg.tiles[(self.x, self.y)].entity = None
     self.alive = False
   
-  def get_char(self, x, y):
-    return self.char  
-
   def get_passable_neighbours(self):
     neighbours = [(self.x+i, self.y+j) for i in range(-1,2) for j in range(-1,2)] 
     return filter(lambda t: self.bg.tiles[t].passable and t != (self.x, self.y), neighbours)
@@ -105,21 +107,22 @@ class Entity(object):
   def teleport(self, x, y):
     if self.bg.tiles[(x, y)].entity is None and self.bg.tiles[(x, y)].is_passable(self):
       self.bg.tiles[(x, y)].entity = self
-      self.bg.tiles[(self.x, self.y)].entity = None
+      if self.x != -1 and self.y != -1:
+        self.bg.tiles[(self.x, self.y)].entity = None
       (self.x, self.y) = (x, y)
       return True
     return False
 
   def update(self):
+    if self.animator:
+        self.animator.update()
     for s in self.statuses:
       s.update()
 
 class BigEntity(Entity):
-  def __init__(self, battleground, side, x, y, chars=["a", "b", "c", "d"], colors=[concepts.ENTITY_DEFAULT]*4):
-    super(BigEntity, self).__init__(battleground, side, x, y, chars[0], colors[0])
-    self.chars = chars
-    self.colors = colors
-    self.length = int(math.sqrt(len(self.chars)).real)
+  def __init__(self, battleground, side, x, y, sprite_name=None, name="BigEntity"):
+    super(BigEntity, self).__init__(battleground, side, x, y, sprite_name, name)
+    self.length = 2
     self.update_body()
   
   def can_be_pushed(self, dx, dy):
@@ -138,15 +141,12 @@ class BigEntity(Entity):
   def clear_body(self):
     for i in range(self.length):
       for j in range(self.length):
-        self.bg.tiles[(self.x+i, self.y+j)].entity = None
+        if self.bg.is_inside(self.x + i, self.y + j):
+            self.bg.tiles[(self.x+i, self.y+j)].entity = None
     
   def die(self):
     self.clear_body()
     self.alive = False
-  
-  def get_char(self, dx, dy):
-    self.color = self.colors[self.length*dx+dy]
-    return self.chars[self.length*dx+dy]
     
   def move(self, dx, dy):
     if self.pushed:
@@ -157,7 +157,6 @@ class BigEntity(Entity):
       if next_tile.entity is not None and next_tile.entity is not self:
         next_tile.entity.get_pushed(dx, dy)
       self.clear_body()
-      next_tile.entity = self
       self.x += dx
       self.y += dy
       self.update_body()
@@ -165,15 +164,15 @@ class BigEntity(Entity):
   def update_body(self):
     for i in range(self.length):
       for j in range(self.length):
-        self.bg.tiles[(self.x+i, self.y+j)].entity = self
+        if self.bg.is_inside(self.x + i, self.y + j):
+            self.bg.tiles[(self.x+i, self.y+j)].entity = self
       
 class Fortress(BigEntity):
-  def __init__(self, battleground, side=NEUTRAL_SIDE, x=-1, y=-1, chars=[':']*4, colors=[concepts.ENTITY_DEFAULT]*4, requisition_production=1):
-    super(Fortress, self).__init__(battleground, side, x, y, chars, colors)
-    self.capacity = len(chars)
+  def __init__(self, battleground, side=NEUTRAL_SIDE, x=-1, y=-1, sprite_name='fortress', requisition_production=1):
+    super(Fortress, self).__init__(battleground, side, x, y, sprite_name, name="Fortress")
+    self.capacity = 4
     self.connected_fortresses = []
     self.guests = []
-    self.name = "Fortress"
     self.requisition_production = requisition_production
 
   def can_be_attacked(self):
@@ -211,28 +210,17 @@ class Fortress(BigEntity):
     self.bg.tiles[(entity.x, entity.y)].entity = None
     (entity.x, entity.y) = (self.x, self.y)
     self.bg.generals.remove(entity)
-    self.chars[len(self.guests)] = entity.char
-    self.colors[len(self.guests)] = entity.color
     self.guests.append(entity)
-    self.update_body()
-
-  def refresh_chars(self):
-    self.chars = [':']*len(self.chars)
-    self.colors = [concepts.ENTITY_DEFAULT]*len(self.colors)
-    for i in range(len(self.guests)):
-      self.chars[i] = self.guests[i].char
-      self.colors[i] = self.guests[i].color
 
   def unhost(self, entity):
     self.guests.remove(entity)
     self.bg.generals.append(entity)
-    self.refresh_chars()
     if not self.guests:
       self.side = NEUTRAL_SIDE
 
 class Mine(Entity):
-  def __init__(self, battleground, x=-1, y=-1, power=50):
-    super(Mine, self).__init__(battleground, NEUTRAL_SIDE, x, y, 'X', concepts.EFFECT_DAMAGE)
+  def __init__(self, battleground, x=-1, y=-1, power=50, sprite_name='mine'):
+    super(Mine, self).__init__(battleground, NEUTRAL_SIDE, x, y, sprite_name, "Mine")
     self.power = power
 
   def can_be_attacked(self):
@@ -240,7 +228,7 @@ class Mine(Entity):
 
   def clone(self, x, y):
     if self.bg.is_inside(x, y) and self.bg.tiles[(x, y)].entity is None and self.bg.tiles[(x, y)].is_passable(self):
-      return self.__class__(self.bg, x, y, self.power)
+      return self.__class__(self.bg, x, y, self.power, self.sprite_name)
     return None
 
   def get_attacked(self, attacker):

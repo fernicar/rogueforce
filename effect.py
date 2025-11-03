@@ -1,15 +1,12 @@
 import entity
 import status
-
-import concepts
-import libtcodpy as libtcod
 from math import copysign
 import itertools
 
 class Effect(entity.Entity):
-  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, char=' ', color=concepts.ENTITY_DEFAULT):
+  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, sprite_name=None, name="Effect"):
     saved = battleground.tiles[(x, y)].entity
-    super(Effect, self).__init__(battleground, side, x, y, char, color)
+    super(Effect, self).__init__(battleground, side, x, y, sprite_name, name)
     self.bg.tiles[(x, y)].entity = saved
     self.bg.tiles[(x, y)].effects.append(self)
     if x != -1:
@@ -20,11 +17,12 @@ class Effect(entity.Entity):
 
   def clone(self, x, y): 
     if self.bg.is_inside(x, y):
-      return self.__class__(self.bg, self.side, x, y, self.char, self.original_color)
+      return self.__class__(self.bg, self.side, x, y, self.sprite_name)
     return None
 
   def dissapear(self):
-    self.bg.tiles[(self.x, self.y)].effects.remove(self)
+    if self in self.bg.tiles[(self.x, self.y)].effects:
+        self.bg.tiles[(self.x, self.y)].effects.remove(self)
     self.alive = False
 
   def do_attack(self, dissapear=False):
@@ -51,8 +49,8 @@ class Effect(entity.Entity):
 
 
 class Arrow(Effect):
-  def __init__(self, battleground, side, x, y, power, attack_effects = ['>', '<']):
-    super(Arrow, self).__init__(battleground, side, x, y, attack_effects[side], concepts.EFFECT_ATTACK_MEDIUM)
+  def __init__(self, battleground, side, x, y, power, sprite_name='arrow'):
+    super(Arrow, self).__init__(battleground, side, x, y, sprite_name)
     self.power = power
     self.do_attack()
 
@@ -66,8 +64,8 @@ class Arrow(Effect):
     self.do_attack(True)
 
 class Blinking(Effect):
-  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, char=' ', color=concepts.ENTITY_DEFAULT):
-    super(Blinking, self).__init__(battleground, side, x, y, char, color)
+  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, sprite_name=None):
+    super(Blinking, self).__init__(battleground, side, x, y, sprite_name)
     self.visible = True
 
   def dissapear(self):
@@ -81,7 +79,8 @@ class Blinking(Effect):
     if self.next_action <= 0:
       self.reset_action()
       if self.visible:
-        self.bg.tiles[(self.x, self.y)].effects.remove(self)
+        if self in self.bg.tiles[(self.x, self.y)].effects:
+            self.bg.tiles[(self.x, self.y)].effects.remove(self)
       else:
         self.bg.tiles[(self.x, self.y)].effects.append(self)
       self.visible = not self.visible
@@ -89,15 +88,15 @@ class Blinking(Effect):
       self.next_action -= 1
 
 class Boulder(Effect):
-  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, char='O', color=concepts.ENTITY_DEFAULT, power=10, delay=0, delta_power=-2):
-    super(Boulder, self).__init__(battleground, side, x, y, char, color)
+  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, sprite_name='boulder', power=10, delay=0, delta_power=-2):
+    super(Boulder, self).__init__(battleground, side, x, y, sprite_name)
     self.power = power
     self.delta_power = delta_power
     self.delay = delay
 
   def clone(self, x, y): 
     if self.bg.is_inside(x, y):
-      return self.__class__(self.bg, self.side, x, y, self.char, self.original_color, self.power, self.delay, self.delta_power)
+      return self.__class__(self.bg, self.side, x, y, self.sprite_name, self.power, self.delay, self.delta_power)
     return None
 
   def update(self):
@@ -106,8 +105,6 @@ class Boulder(Effect):
     self.move_path()
     if self.delay > 0:
       self.delay -= 1
-      if self.delay == 0:
-        self.char = self.char.lower()
       return
     self.do_attack()
     self.power += self.delta_power
@@ -115,8 +112,8 @@ class Boulder(Effect):
       self.dissapear()
 
 class Bouncing(Effect):
-  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, char='o', color=concepts.ENTITY_DEFAULT, power=5, path=[]):
-    super(Bouncing, self).__init__(battleground, side, x, y, char, color)
+  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, sprite_name='bouncing', power=5, path=[]):
+    super(Bouncing, self).__init__(battleground, side, x, y, sprite_name)
     self.path = path
     self.power = power
     self.direction = 1
@@ -124,7 +121,7 @@ class Bouncing(Effect):
 
   def clone(self, x, y): 
     if self.bg.is_inside(x, y):
-      return self.__class__(self.bg, self.side, x, y, self.char, self.original_color, self.power, self.path)
+      return self.__class__(self.bg, self.side, x, y, self.sprite_name, self.power, self.path)
     return None
 
   def update(self):
@@ -142,53 +139,45 @@ class Bouncing(Effect):
     self.position += self.direction
 
 class EffectLoop(Effect):
-  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, chars=[' '], color=concepts.ENTITY_DEFAULT, duration=1):
-    super(EffectLoop, self).__init__(battleground, side, x, y, chars[0], color)
-    self.chars = chars
+  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, sprite_name=None, duration=1):
+    super(EffectLoop, self).__init__(battleground, side, x, y, sprite_name)
     self.duration = duration
-    self.index = 0
 
   def clone(self, x, y): 
     if self.bg.is_inside(x, y):
-      return self.__class__(self.bg, self.side, x, y, self.chars, self.original_color, self.duration)
+      return self.__class__(self.bg, self.side, x, y, self.sprite_name, self.duration)
     return None
 
   def update(self):
     if not self.alive: return
     self.duration -= 1
-    self.char = self.chars[self.index]
-    self.index = (self.index+1) % len(self.chars)
     if self.duration < 0:
       self.dissapear()
 
 class Explosion(Effect):
-  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, char='*', color=concepts.EFFECT_ATTACK_LIGHT, power=10):
-    super(Explosion, self).__init__(battleground, side, x, y, char, color)
+  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, sprite_name='explosion', power=10):
+    super(Explosion, self).__init__(battleground, side, x, y, sprite_name)
     self.power = power
+    self.duration = 3
 
   def clone(self, x, y): 
     if self.bg.is_inside(x, y):
-      return self.__class__(self.bg, self.side, x, y, self.char, self.original_color, self.power)
+      return self.__class__(self.bg, self.side, x, y, self.sprite_name, self.power)
     return None
 
   def update(self):
-    #TODO: generalize it to work with any starting color
     if not self.alive: return
-    if self.color == concepts.EFFECT_ATTACK_LIGHT:
-      self.color = concepts.EFFECT_ATTACK_MEDIUM
-    elif self.color == concepts.EFFECT_ATTACK_MEDIUM:
-      self.color = concepts.EFFECT_DAMAGE
-    else:
+    self.duration -= 1
+    if self.duration == 0:
       self.do_attack()
       self.dissapear()
 
 class Lava(Effect):
-  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, char='L', color=concepts.EFFECT_DAMAGE, power=5, duration=10):
-    super(Lava, self).__init__(battleground, side, x, y, char, color)
+  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, sprite_name='lava', power=5, duration=10):
+    super(Lava, self).__init__(battleground, side, x, y, sprite_name)
     self.power = power
     self.original_duration = duration
     self.duration = duration
-    self.bg.tiles[(self.x, self.y)].hover(color)
     self.burning_status =  status.Poison(None, power=1, tbt=2, ticks=1, name="Burnt")
     entity = self.bg.tiles[(self.x, self.y)].entity
     if entity:
@@ -196,14 +185,13 @@ class Lava(Effect):
 
   def clone(self, x, y): 
     if self.bg.is_inside(x, y):
-      return self.__class__(self.bg, self.side, x, y, self.char, self.original_color, self.power, self.original_duration)
+      return self.__class__(self.bg, self.side, x, y, self.sprite_name, self.power, self.original_duration)
     return None
 
   def update(self):
     if not self.alive:
       return
     if self.duration == 0:
-      self.bg.tiles[(self.x, self.y)].unhover()
       self.dissapear()
     if self.path:
       tile = self.path.pop(0)
@@ -214,24 +202,24 @@ class Lava(Effect):
     self.duration -= 1
 
 class Pathing(Effect):
-  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, char=' ', color=concepts.ENTITY_DEFAULT):
-    super(Pathing, self).__init__(battleground, side, x, y, char, color)
+  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, sprite_name=None):
+    super(Pathing, self).__init__(battleground, side, x, y, sprite_name)
 
   def update(self):
     if self.alive and not self.move_path():
       self.dissapear()
 
 class Orb(Pathing):
-  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, char='o', color=concepts.ENTITY_DEFAULT,
+  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, sprite_name='orb',
                power=15, attack_type="magical"):
-    super(Orb, self).__init__(battleground, side, x, y, char, color)
+    super(Orb, self).__init__(battleground, side, x, y, sprite_name)
     self.power = power
     self.attack_type = attack_type
     self.attacked_entities = []
 
   def clone(self, x, y): 
     if self.bg.is_inside(x, y):
-      return self.__class__(self.bg, self.side, x, y, self.char, self.original_color, self.power, self.attack_type)
+      return self.__class__(self.bg, self.side, x, y, self.sprite_name, self.power, self.attack_type)
 
   def update(self):
     super(Orb, self).update()
@@ -244,8 +232,8 @@ class Orb(Pathing):
             self.attacked_entities.append(entity)
 
 class Slash(Effect):
-  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, char='|', color=concepts.ENTITY_DEFAULT, power=10, steps=8, goto=1, area=None):
-    super(Slash, self).__init__(battleground, side, x, y, char, color)
+  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, sprite_name='slash', power=10, steps=8, goto=1, area=None):
+    super(Slash, self).__init__(battleground, side, x, y, sprite_name)
     self.general = self.bg.generals[side]
     self.max_steps = steps
     self.step = 0;
@@ -253,13 +241,12 @@ class Slash(Effect):
     self.center_x = x
     self.center_y = y
     self.direction = 0; 
-    self.chars = ['|', '\\', '-', '/']
     self.goto = goto
     self.directions = [(0,1),(1,1),(1,0),(1,-1),(0,-1),(-1,-1),(-1,0),(-1,1)]
 
   def clone(self, x, y):
     if self.bg.is_inside(x, y):
-      return self.__class__(self.bg, self.side, self.general.x, self.general.y, self.char, self.original_color, self.power, self.max_steps, self.goto)
+      return self.__class__(self.bg, self.side, self.general.x, self.general.y, self.sprite_name, self.power, self.max_steps, self.goto)
     return None
 
   def update(self):
@@ -268,20 +255,19 @@ class Slash(Effect):
     if abs(self.step) >= self.max_steps:
       self.dissapear()
       return
-    self.char = self.chars[(self.step+self.direction)%4]
     self.teleport(self.general.x, self.general.y)
     self.move(*self.directions[(self.step+self.direction)%8])
     self.step += int(copysign(1, self.goto))
     self.do_attack()
 
 class TempEffect(Effect):
-  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, char=' ', color=concepts.ENTITY_DEFAULT, duration=1):
-    super(TempEffect, self).__init__(battleground, side, x, y, char, color)
+  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, sprite_name=None, duration=1):
+    super(TempEffect, self).__init__(battleground, side, x, y, sprite_name)
     self.duration = duration
 
   def clone(self, x, y): 
     if self.bg.is_inside(x, y):
-      return self.__class__(self.bg, self.side, x, y, self.char, self.original_color, self.duration)
+      return self.__class__(self.bg, self.side, x, y, self.sprite_name, self.duration)
     return None
 
   def update(self):
@@ -291,40 +277,34 @@ class TempEffect(Effect):
       self.dissapear()
 
 class Thunder(Effect):
-  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, char='|', color=concepts.EFFECT_ATTACK_LIGHT, power=30, area=None):
+  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, sprite_name='thunder', power=30, area=None):
     self.target_y = y
     self.power = power
     self.area = area
     if x != -1:
       y = y-5 if y-5 >= 0 else 0
-    super(Thunder, self).__init__(battleground, side, x, y, char, color)
+    super(Thunder, self).__init__(battleground, side, x, y, sprite_name)
 
   def clone(self, x, y): 
     if self.bg.is_inside(x, y):
-      return self.__class__(self.bg, self.side, x, y, self.char, self.original_color, self.power, self.area)
+      return self.__class__(self.bg, self.side, x, y, self.sprite_name, self.power, self.area)
     return None
 
   def update(self):
-    #TODO: generalize it to work with any starting color
     if not self.alive: return
-    if self.color == concepts.EFFECT_ATTACK_LIGHT:
-      self.color = concepts.EFFECT_ATTACK_MEDIUM
-    elif self.color == concepts.EFFECT_ATTACK_MEDIUM:
-      self.color = concepts.EFFECT_DAMAGE
-    elif self.y != self.target_y:
+    if self.y != self.target_y:
       self.move(0, 1)
-      self.color = concepts.EFFECT_ATTACK_LIGHT
     else:
       self.dissapear()
-      e = Explosion(self.bg, self.side, self.x, self.y, '*', concepts.EFFECT_ATTACK_LIGHT, self.power)
+      e = Explosion(self.bg, self.side, self.x, self.y, 'explosion', self.power)
       if self.area:
         for t in self.area.get_tiles(self.x, self.y):
           if (t.x, t.y) != (e.x, e.y):
             e.clone(t.x, t.y)
 
 class Wave(Effect):
-  def __init__(self, battleground, side, x, y, power):
-    super(Wave, self).__init__(battleground, side, x, y, '~', concepts.EFFECT_WAVE)
+  def __init__(self, battleground, side, x, y, power, sprite_name='wave'):
+    super(Wave, self).__init__(battleground, side, x, y, sprite_name)
     self.power = power
     self.entities_attacked = []
     self.do_attack()

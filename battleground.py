@@ -85,6 +85,7 @@ class Tile(object):
     self.effects = []
     self.x = x
     self.y = y
+    self.hover = False
 
   def get_char(self, x, y):
     return self.char
@@ -109,6 +110,8 @@ class Tile(object):
   
   def hover(self, color=concepts.UI_HOVER_DEFAULT):
     self.bg_color = color
+    self.hover = True
 
   def unhover(self):
     self.bg_color = self.bg_original_color
+    self.hover = False

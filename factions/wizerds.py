@@ -4,13 +4,11 @@ from sieve import *
 from skill import *
 from status import *
 
-import concepts
-
 import random
 
 class Starcall(General):
-  def __init__(self, battleground, side, x=-1, y=-1, name="Starcall", color=concepts.FACTION_WIZERDS):
-    super(Starcall, self).__init__(battleground, side, x, y, name, color)
+  def __init__(self, battleground, side, x=-1, y=-1, name="Starcall", sprite_name="starcall"):
+    super(Starcall, self).__init__(battleground, side, x, y, name, sprite_name)
     self.rand = random.Random()
    
   def initialize_skills(self):

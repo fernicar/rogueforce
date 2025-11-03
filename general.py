@@ -6,27 +6,19 @@ from skill import *
 from status import *
 import effect
 import tactic
-
-import concepts
+import pygame
 
 import math
 
-
-from entity_sprite_mixin import SpriteEntityMixin
-
-class General(Minion, SpriteEntityMixin):
-  def __init__(self, battleground, side, x=-1, y=-1, name="General", color=concepts.FACTION_LEADER):
-    super(General, self).__init__(battleground, side, x, y, name, name[0], color)
+class General(Minion):
+  def __init__(self, battleground, side, x=-1, y=-1, name="General", sprite_name="general"):
+    super(General, self).__init__(battleground, side, x, y, name, sprite_name)
     self.max_hp = 300
     self.cost = 250
-
-    # Initialize sprite system (each general subclass should set character_name)
-    self.character_name = name.lower()
-    self.init_sprite_system(self.character_name)
     self.death_quote = "..."
     self.flag = None
     self.formation = Rows(self)
-    self.minion = Minion(self.bg, self.side, char='b' if side else 'd')
+    self.minion = Minion(self.bg, self.side, sprite_name='minion_d' if side else 'minion_b')
     self.skills = []
     self.starting_minions = 101
     self.tactics = [tactic.stop, tactic.forward, tactic.backward, tactic.go_sides, tactic.go_center, tactic.attack_general, tactic.defend_general]
@@ -70,7 +62,7 @@ class General(Minion, SpriteEntityMixin):
         return
       self.flag.dissapear()
     if self.bg.is_inside(x, y):
-      self.flag = effect.Blinking(self.bg, self.side, x, y, 'q', self.original_color)
+      self.flag = effect.Blinking(self.bg, self.side, x, y, 'flag')
     else:
       self.flag = None
 
@@ -111,9 +103,8 @@ class General(Minion, SpriteEntityMixin):
   def update(self):
     if not self.alive:
       return
+    super().update()
     for s in self.skills:
-      s.update()
-    for s in self.statuses:
       s.update()
     self.swap_cd = min(self.swap_cd+1, self.swap_max_cd)
     if self.next_action <= 0:
@@ -130,9 +121,6 @@ class General(Minion, SpriteEntityMixin):
     else:
       self.next_action -= 1
       
-  def update_color(self):
-    self.color = self.original_color
-
   def use_skill(self, i, x, y):
     skill = self.skills[i]
     if skill.is_ready():
@@ -146,8 +134,8 @@ class General(Minion, SpriteEntityMixin):
     return False
 
 class Conway(General):
-  def __init__(self, battleground, side, x=-1, y=-1, name="Conway", color=concepts.FACTION_CONWAY):
-    super(Conway, self).__init__(battleground, side, x, y, name, color)
+  def __init__(self, battleground, side, x=-1, y=-1, name="Conway", sprite_name="conway"):
+    super(Conway, self).__init__(battleground, side, x, y, name, sprite_name)
     self.death_quote = "This is more like a game of... death"
     self.tactics = [tactic.stop, tactic.null]
     self.tactic_quotes = ["Stop", "Live life"]
@@ -200,13 +188,13 @@ class Conway(General):
     super(Conway, self).update()
 
 class Emperor(General):
-  def __init__(self, battleground, side, x=-1, y=-1, name="Emperor", color=concepts.FACTION_EMPEROR):
-    super(Emperor, self).__init__(battleground, side, x, y, name, color)
+  def __init__(self, battleground, side, x=-1, y=-1, name="Emperor", sprite_name="emperor"):
+    super(Emperor, self).__init__(battleground, side, x, y, name, sprite_name)
     self.max_hp = 60
     #self.start_quote = "May this night carry my will and these old stars forever remember this night."
     self.death_quote = "Nightspirit... embrace my soul..."
     self.human_form = True
-    self.minion = RangedMinion(self.bg, self.side, name="wizard")
+    self.minion = RangedMinion(self.bg, self.side, name="wizard", sprite_name="wizard")
     self.minion.attack_effects = [')', '(']
     self.starting_minions = 0
     self.transform_index = 3
@@ -233,15 +221,13 @@ class Emperor(General):
 
   def transform(self):
     if not self.human_form:
-      self.char = 'E'
+      self.sprite_name = 'emperor'
       self.name = "Emperor"
       return
     self.human_form = False
     self.hp = self.max_hp
-    self.char = 'N'
+    self.sprite_name = 'nightspirit'
     self.name = "Nightspirit"
-    self.original_color = concepts.FACTION_TRANSFORMATION
-    self.color = self.original_color
     self.skills = []
     self.skills.append(Skill(self, sonic_waves, 50, [10, 3], "Thus spake the Nightspirit", ""))
     self.skills.append(Skill(self, darkness, 50, [20], "Nightside eclipse", "", AllBattleground(self.bg)))

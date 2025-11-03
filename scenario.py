@@ -4,9 +4,9 @@ from entity import *
 from general import *
 from faction import *
 from window import *
+import pygame
 
 import concepts
-import pygame
 
 import re
 
@@ -132,19 +132,22 @@ class Scenario(Window):
   def render_side_panel(self, i, bar_length, bar_offset_x):
     x_offset = (PANEL_WIDTH + BG_WIDTH) * i * 10
 
-    self.draw_text(" Requisition", x_offset + (bar_offset_x - 1) * 10, 0, concepts.UI_TEXT)
+    self.draw_text(" Requisition", x_offset + (bar_offset_x - 1) * 10, 10, concepts.UI_TEXT)
     self.render_bar(x_offset + bar_offset_x * 10, 10, bar_length * 10, self.requisition[i], self.max_requisition, concepts.STATUS_PROGRESS_DARK, concepts.STATUS_PROGRESS_LIGHT, concepts.UI_BACKGROUND)
 
     line = 4
     for j in range(len(self.factions[i].generals)):
         g = self.factions[i].generals[j]
         fg_color = g.color if g == self.selected_general else concepts.STATUS_SELECTED
+
         self.draw_text(" " + g.name, x_offset + (bar_offset_x - 1) * 10, line * 10, fg_color)
         self.draw_text(KEYMAP_GENERALS[j], x_offset + (bar_offset_x - 1) * 10, (line + 1) * 10, g.color)
+
         if not g.deployed:
             self.render_bar(x_offset + bar_offset_x * 10, (line + 1) * 10, bar_length * 10, g.requisition, g.cost, concepts.STATUS_PROGRESS_DARK, concepts.STATUS_PROGRESS_LIGHT, concepts.UI_BACKGROUND)
         else:
             self.render_bar(x_offset + bar_offset_x * 10, (line + 1) * 10, bar_length * 10, g.hp, g.max_hp, concepts.STATUS_HEALTH_LOW, concepts.STATUS_HEALTH_MEDIUM, concepts.UI_BACKGROUND)
+
         line += 3
 
   def start_battle(self, generals):

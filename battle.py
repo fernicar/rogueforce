@@ -113,8 +113,7 @@ class BattleWindow(Window):
         elif m.startswith("tactic"):
           self.bg.generals[i].command_tactic(int(m[6]))
         elif m.startswith("swap"):
-          if self.bg.generals[i].swap(int(m[4])):
-            self.render_side_panel_clear(i)
+          self.bg.generals[i].swap(int(m[4]))
         else:
           match = FLAG_PATTERN.match(m)
           if match:
@@ -125,7 +124,6 @@ class BattleWindow(Window):
               if self.bg.generals[i].use_skill(*map(int, match.groups())):
                 self.message(self.bg.generals[i].name + ": " + self.bg.generals[i].skills[int(match.group(1))].quote,
                              self.bg.generals[i].color)
-
 
   def render_info(self, x, y):
     x = int(x)

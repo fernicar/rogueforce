@@ -70,8 +70,6 @@ class Window(object):
     if DEBUG:
       sys.stdout.write("DEBUG: Window.__init__ completed\n")
     
-    # Note: render_all() should be called by subclasses after their initialization is complete
-
   def ai_action(self, turn):
     return None
 
@@ -173,6 +171,9 @@ class Window(object):
       if elapsed < turn_time:
           time.sleep(turn_time - elapsed)
 
+      if turn == 1:
+        pygame.image.save(self.screen, "screenshot.png")
+
     if DEBUG:
       sys.stdout.write("DEBUG: Game loop ended\n")
     return winner
@@ -224,7 +225,6 @@ class Window(object):
   def render_side_panel(self, i, bar_length, bar_offset_x):
     pass
 
-
   def draw_text(self, text, x, y, color):
     """Draw text to the screen"""
     surface = self.font.render(text, True, color)
@@ -242,8 +242,6 @@ class Window(object):
     """Render all sprites to the pygame screen"""
     if not config.USE_SPRITES:
         return
-
-    self.screen.fill((0, 0, 0))  # Black background
 
     # Get all entities with sprites
     entities = self.bg.generals + self.bg.minions

@@ -3,9 +3,9 @@ import area
 import effect
 import skill
 import tactic
+import pygame
 
 import concepts
-import libtcodpy as libtcod
 
 import random
 
@@ -234,7 +234,7 @@ class Linked(Status):
         self.entity.get_attacked(self)
         self.end()
       else:
-        t.bg_color = libtcod.color_lerp(concepts.UI_BACKGROUND, self.owner.original_color, 0.4)
+        t.bg_color = concepts.UI_BACKGROUND.lerp(self.owner.original_color, 0.4)
         # Note: Dynamic color interpolation - appropriate use of libtcod.color_lerp for status effects
 
 class Poison(Status):
@@ -306,7 +306,7 @@ class Recalling(Status):
     if self.duration > 0 and self.entity and self.entity.bg and self.color:
       self.entity.next_action = 100
       tile = self.entity.bg.tiles[(self.entity.x, self.entity.y)]
-      self.entity.color = libtcod.color_lerp(tile.bg_color, self.color, 1-(self.duration/10.0))
+      self.entity.color = tile.bg_color.lerp(self.color, 1-(self.duration/10.0))
       # Note: Dynamic color interpolation for status effects - appropriate use of libtcod
 
   def end(self):
@@ -397,7 +397,7 @@ class Vanishing(Status):
       self.entity.next_action = 100
       tile = self.entity.bg.tiles[(self.entity.x, self.entity.y)]
       if self.entity.color and tile.bg_color:
-        self.entity.color = libtcod.color_lerp(self.entity.color, tile.bg_color, 1-(self.duration/10.0))
+        self.entity.color = self.entity.color.lerp(tile.bg_color, 1-(self.duration/10.0))
       # Note: Dynamic color interpolation for status effects - appropriate use of libtcod
 
   def end(self):

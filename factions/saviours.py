@@ -5,11 +5,9 @@ from effect import *
 from math import copysign
 import tactic
 
-import concepts
-
 class Ares(General):
-  def __init__(self, battleground, side, x=-1, y=-1, name="Ares", color=concepts.FACTION_SAVIOURS):
-    super(Ares, self).__init__(battleground, side, x, y, name, color)
+  def __init__(self, battleground, side, x=-1, y=-1, name="Ares", sprite_name="ares"):
+    super(Ares, self).__init__(battleground, side, x, y, name, sprite_name)
     self.max_hp = 200
     self.death_quote = "I lost a battle, but..."
     self.starting_minions = 0
