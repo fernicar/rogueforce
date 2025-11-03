@@ -3,6 +3,7 @@ from battleground import Battleground
 
 import concepts
 import libtcodpy as libtcod
+import tcod
 import pygame
 
 import socket
@@ -61,8 +62,14 @@ class Window(object):
     if DEBUG:
       sys.stdout.write("DEBUG: Font set, initializing root console\n")
     
-    # Initialize window with a reasonable size
-    libtcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT, 'Rogue Force')
+    # Pygame initialization for sprite rendering
+    if config.USE_SPRITES:
+        pygame.init()
+        self.screen = pygame.display.set_mode((SCREEN_WIDTH * 10, SCREEN_HEIGHT * 10))
+        pygame.display.set_caption('Rogue Force')
+    else:
+        # Initialize window with a reasonable size
+        libtcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT, 'Rogue Force')
     
     if DEBUG:
       sys.stdout.write("DEBUG: Root console initialized successfully\n")
@@ -93,12 +100,6 @@ class Window(object):
       sys.stdout.write("DEBUG: Window.__init__ completed\n")
     
     # Note: render_all() should be called by subclasses after their initialization is complete
-
-    # Pygame initialization for sprite rendering
-    if config.USE_SPRITES:
-        pygame.init()
-        self.screen = pygame.display.set_mode((SCREEN_WIDTH * 10, SCREEN_HEIGHT * 10))
-        pygame.display.set_caption('Rogue Force')
 
   def ai_action(self, turn):
     return None
@@ -161,6 +162,15 @@ class Window(object):
           self.messages[not self.side][int(split[0])] = str(split[1])
 
       while time.time() - start < turn_time:
+        if config.USE_SPRITES:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.game_over = True
+                    return None
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        self.game_over = True
+                        return None
         libtcod.sys_check_for_event(libtcod.EVENT_ANY, key, mouse)
         (x, y) = (mouse.cx-BG_OFFSET_X, mouse.cy-BG_OFFSET_Y)
         if key.vk == libtcod.KEY_ESCAPE:
@@ -242,10 +252,14 @@ class Window(object):
     self.con_msgs.blit(self.con_root, MSG_OFFSET_X, MSG_OFFSET_Y, 0, 0, MSG_WIDTH, MSG_HEIGHT, 0, 0)
     
     if config.USE_SPRITES:
-        # Convert the libtcod console to a pygame surface
-        tcod_surface = pygame.image.frombuffer(self.con_root.rgba, (SCREEN_WIDTH, SCREEN_HEIGHT), "RGBA")
+        # Convert the libtcod console to a numpy array
+        tcod_numpy = tcod.console_to_numpy(self.con_root)
+        # Convert the numpy array to a pygame surface
+        tcod_surface = pygame.surfarray.make_surface(tcod_numpy[:,:,:3])
         # Scale the tcod surface to match the pygame screen size
         tcod_surface = pygame.transform.scale(tcod_surface, (SCREEN_WIDTH * 10, SCREEN_HEIGHT * 10))
+        # Set the colorkey to make the black background transparent
+        tcod_surface.set_colorkey((0, 0, 0))
         # Blit the tcod surface onto the pygame screen
         self.screen.blit(tcod_surface, (0, 0))
         pygame.display.flip()

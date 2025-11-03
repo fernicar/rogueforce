@@ -42,6 +42,8 @@ class BattleWindow(Window):
     if DEBUG:
       sys.stdout.write("DEBUG: BattleWindow.__init__ completed\n")
 
+    self.render_all(0, 0)
+
   def ai_action(self, turn):
     ai_side = (self.side+1)%2
     return self.bg.generals[ai_side].ai_action(turn)
