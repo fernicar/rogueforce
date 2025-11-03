@@ -619,6 +619,10 @@ if __name__ == "__main__":
 pip install pillow pygame
 ```
 
+### Step 1a: Update `requirements.txt`
+
+Remove `tcod` from `requirements.txt`.
+
 ### Step 2: Create Asset Structure
 
 ```bash
@@ -648,6 +652,10 @@ Create the following new files with the code provided above:
 **minion.py**: Enhance with sprite methods as shown
 
 **general.py**: Add sprite initialization
+
+**window.py**: Add a `pygame`-based rendering path to the `Window` class. This will involve creating a `pygame` screen, rendering the sprites, and then blitting the `libtcod` console on top of it.
+
+**battle.py** and **scenario.py**: Modify the `render_all` methods in both files to call the new sprite rendering methods in `window.py`.
 
 ### Step 5: Sprite Naming Convention
 

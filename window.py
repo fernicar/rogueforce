@@ -3,6 +3,7 @@ from battleground import Battleground
 
 import concepts
 import libtcodpy as libtcod
+import pygame
 
 import socket
 import sys
@@ -11,6 +12,7 @@ import time
 
 # Import DEBUG from config module to avoid circular imports
 from config import DEBUG
+import config
 
 BG_WIDTH = 60
 BG_HEIGHT = 43
@@ -91,6 +93,12 @@ class Window(object):
       sys.stdout.write("DEBUG: Window.__init__ completed\n")
     
     # Note: render_all() should be called by subclasses after their initialization is complete
+
+    # Pygame initialization for sprite rendering
+    if config.USE_SPRITES:
+        pygame.init()
+        self.screen = pygame.display.set_mode((SCREEN_WIDTH * 10, SCREEN_HEIGHT * 10))
+        pygame.display.set_caption('Rogue Force')
 
   def ai_action(self, turn):
     return None
@@ -193,8 +201,11 @@ class Window(object):
     return False
 
   def render_all(self, x, y):
+    if config.USE_SPRITES:
+        self.render_sprites()
+
     if DEBUG:
-      sys.stdout.write("DEBUG: render_all called\n")
+        sys.stdout.write("DEBUG: render_all called\n")
     
     # Clear the main console first
     libtcod.console_clear(self.con_root)
@@ -202,19 +213,19 @@ class Window(object):
     # Draw the battleground
     self.bg.draw(self.con_bg)
     if DEBUG:
-      sys.stdout.write("DEBUG: Battleground drawn\n")
+        sys.stdout.write("DEBUG: Battleground drawn\n")
     
     self.render_info(x, y)
     if DEBUG:
-      sys.stdout.write("DEBUG: Info rendered\n")
+        sys.stdout.write("DEBUG: Info rendered\n")
       
     self.render_msgs()
     if DEBUG:
-      sys.stdout.write("DEBUG: Messages rendered\n")
+        sys.stdout.write("DEBUG: Messages rendered\n")
       
     self.render_panels()
     if DEBUG:
-      sys.stdout.write("DEBUG: Panels rendered\n")
+        sys.stdout.write("DEBUG: Panels rendered\n")
     
     # Clear background console before blitting
     libtcod.console_clear(self.con_bg)
@@ -222,18 +233,28 @@ class Window(object):
     
     # Fix blit calls with correct parameter types for Pylance
     if DEBUG:
-      sys.stdout.write("DEBUG: Starting blit operations\n")
+        sys.stdout.write("DEBUG: Starting blit operations\n")
       
-    self.con_bg.blit(self.con_root, BG_OFFSET_X, BG_OFFSET_Y, 0, 0, BG_WIDTH, BG_HEIGHT)
+    self.con_bg.blit(self.con_root, BG_OFFSET_X, BG_OFFSET_Y, 0, 0, BG_WIDTH, BG_HEIGHT, 0, 0)
     for i in [0,1]:
-      self.con_panels[i].blit(self.con_root, (PANEL_WIDTH+BG_WIDTH)*i, PANEL_OFFSET_Y, 0, 0, PANEL_WIDTH, PANEL_HEIGHT)
-    self.con_info.blit(self.con_root, INFO_OFFSET_X, INFO_OFFSET_Y, 0, 0, MSG_WIDTH, MSG_HEIGHT)
-    self.con_msgs.blit(self.con_root, MSG_OFFSET_X, MSG_OFFSET_Y, 0, 0, MSG_WIDTH, MSG_HEIGHT)
-    libtcod.console_blit(self.con_root, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0)  # type: ignore[arg-type]
-    libtcod.console_flush()
+        self.con_panels[i].blit(self.con_root, (PANEL_WIDTH+BG_WIDTH)*i, PANEL_OFFSET_Y, 0, 0, PANEL_WIDTH, PANEL_HEIGHT, 0, 0)
+    self.con_info.blit(self.con_root, INFO_OFFSET_X, INFO_OFFSET_Y, 0, 0, MSG_WIDTH, MSG_HEIGHT, 0, 0)
+    self.con_msgs.blit(self.con_root, MSG_OFFSET_X, MSG_OFFSET_Y, 0, 0, MSG_WIDTH, MSG_HEIGHT, 0, 0)
     
+    if config.USE_SPRITES:
+        # Convert the libtcod console to a pygame surface
+        tcod_surface = pygame.image.frombuffer(self.con_root.rgba, (SCREEN_WIDTH, SCREEN_HEIGHT), "RGBA")
+        # Scale the tcod surface to match the pygame screen size
+        tcod_surface = pygame.transform.scale(tcod_surface, (SCREEN_WIDTH * 10, SCREEN_HEIGHT * 10))
+        # Blit the tcod surface onto the pygame screen
+        self.screen.blit(tcod_surface, (0, 0))
+        pygame.display.flip()
+    else:
+        libtcod.console_blit(self.con_root, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0)
+        libtcod.console_flush()
+
     if DEBUG:
-      sys.stdout.write("DEBUG: Screen flushed and should be visible\n")
+        sys.stdout.write("DEBUG: Screen flushed and should be visible\n")
 
   def render_bar(self, con, x, y, w, value, max_value, bar_bg_color, bar_fg_color, text_color):
     ratio = int(w*(float(value)/max_value))
@@ -274,6 +295,25 @@ class Window(object):
   def render_side_panel_clear(self, i, bar_length=11, bar_offset_x=4):
     libtcod.console_set_default_background(self.con_panels[i], concepts.UI_BACKGROUND)
     libtcod.console_rect(self.con_panels[i], bar_offset_x-1, 0, bar_length+1, 40, True, libtcod.BKGND_SET)
+
+  def render_sprites(self):
+    """Render all sprites to the pygame screen"""
+    if not config.USE_SPRITES:
+        return
+
+    self.screen.fill((0, 0, 0))  # Black background
+
+    # Get all entities with sprites
+    entities = self.bg.generals + self.bg.minions
+
+    for entity in entities:
+        if hasattr(entity, 'has_sprites') and entity.has_sprites:
+            sprite = entity.get_current_sprite()
+            if sprite:
+                # Calculate screen position
+                x = (entity.x + BG_OFFSET_X) * 10
+                y = (entity.y + BG_OFFSET_Y) * 10
+                self.screen.blit(sprite, (x, y))
 
   def update_all(self):
     for g in self.bg.generals:
