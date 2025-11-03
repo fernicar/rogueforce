@@ -17,6 +17,7 @@ light_green = (128, 255, 128)
 light_blue = (128, 128, 255)
 light_magenta = (255, 128, 255)
 light_cyan = (128, 255, 255)
+light_crimson = (245, 105, 145)
 
 # Dark variants
 dark_red = (128, 0, 0)

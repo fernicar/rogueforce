@@ -5,11 +5,11 @@ from minion import Minion, BigMinion
 from skill import *
 import sieve
 
-import colors
+import CONCEPTS
 import libtcodpy as libtcod
 
 class Flappy(General):
-  def __init__(self, battleground, side, x=-1, y=-1, name="Flappy", color=colors.dark_green):
+  def __init__(self, battleground, side, x=-1, y=-1, name="Flappy", color=CONCEPTS.FACTION_MECHANICS):
     super(Flappy, self).__init__(battleground, side, x, y, name, color)
     self.death_quote = "I'll be back, like a boo... me..."
     self.minion = Minion(self.bg, self.side, name="goblin")
@@ -23,13 +23,13 @@ class Flappy(General):
   def initialize_skills(self):
     self.skills = []
     self.skills.append(Skill(self, add_path, 5, [self.gobmerang], "Fire the Gobmerang!", "Launches Gobmerang to fly high in the air",
-                             Arc(self.bg, origin=(self.gobmerang.x, self.y), ratio_y=0.6)))
+                             Arc(self.bg, origin=(self.gobmerang.x, self.y), ratio_y=1)))
     self.skills.append(Skill(self, place_entity, 5, [Boulder(self.bg, delay=5)], "Drop the boulder!", "Tells Gobmerang to drop a boulder",
                              SingleTarget(self.bg)))
     self.skills.append(Skill(self, place_entity, 5, [Lava(self.bg)], "Burn them from above!", "Tells Gobmerang to drop a cauldron of oil",
                              SingleTarget(self.bg)))
     self.skills.append(Skill(self, add_path, 5, [], "Fire the Gobmerang!", "Launches Gobmerang to fly high in the air",
-                             Arc(self.bg, origin=(self.x, self.y+1), ratio_y=1.2, steps=120)))
+                             Arc(self.bg, origin=(self.x, self.y+1), ratio_y=1, steps=120)))
     self.skills.append(Skill(self, place_entity, 5, [Explosion(self.bg, power=20)], "Last chance, boom the machine!", "Explodes the slingshot",
                              CustomArea(self.bg, tiles=Circle(self.bg, radius=4).get_all_tiles(self.slingshot.x+1, self.slingshot.y+1))))
 
@@ -37,7 +37,7 @@ class Flappy(General):
     self.boomerang = Bouncing(self.bg, char="(" if self.side else ")")
     self.gobmerang = Pathing(self.bg, self.side, self.x + (-3 if self.side else 3), self.y, char='G')
     self.slingshot = BigMinion(self.bg, self.side, self.x + (-4 if self.side else 2), self.y-1, name="Slingmerang",
-                               chars=list("//>\\~ ~\\|") if self.side else list("//|\\~ ~\\<"), colors=[colors.white]*9)
+                               chars=list("//>\\~ ~\\|") if self.side else list("//|\\~ ~\\<"), colors=[CONCEPTS.ENTITY_DEFAULT]*9)
     self.draw_slingshot()
     self.slingshot_drawn = False
     self.gobmerang_shot = False
@@ -86,4 +86,3 @@ class Flappy(General):
       if self.slingshot.alive:
         return super(Flappy, self).use_skill(i, x, y)
     return False
-

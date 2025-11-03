@@ -1,11 +1,11 @@
-import colors
+import CONCEPTS
 import libtcodpy as libtcod
 import cmath as math
 
 NEUTRAL_SIDE = 555
 
 class Entity(object):
-  def __init__(self, battleground, side=NEUTRAL_SIDE, x=-1, y=-1, char=' ', color=colors.white):
+  def __init__(self, battleground, side=NEUTRAL_SIDE, x=-1, y=-1, char=' ', color=CONCEPTS.ENTITY_DEFAULT):
     self.bg = battleground
     self.x = x
     self.y = y
@@ -116,7 +116,7 @@ class Entity(object):
       s.update()
 
 class BigEntity(Entity):
-  def __init__(self, battleground, side, x, y, chars=["a", "b", "c", "d"], colors=[colors.white]*4):
+  def __init__(self, battleground, side, x, y, chars=["a", "b", "c", "d"], colors=[CONCEPTS.ENTITY_DEFAULT]*4):
     super(BigEntity, self).__init__(battleground, side, x, y, chars[0], colors[0])
     self.chars = chars
     self.colors = colors
@@ -169,7 +169,7 @@ class BigEntity(Entity):
         self.bg.tiles[(self.x+i, self.y+j)].entity = self
       
 class Fortress(BigEntity):
-  def __init__(self, battleground, side=NEUTRAL_SIDE, x=-1, y=-1, chars=[':']*4, colors=[colors.white]*4, requisition_production=1):
+  def __init__(self, battleground, side=NEUTRAL_SIDE, x=-1, y=-1, chars=[':']*4, colors=[CONCEPTS.ENTITY_DEFAULT]*4, requisition_production=1):
     super(Fortress, self).__init__(battleground, side, x, y, chars, colors)
     self.capacity = len(chars)
     self.connected_fortresses = []
@@ -219,7 +219,7 @@ class Fortress(BigEntity):
 
   def refresh_chars(self):
     self.chars = [':']*len(self.chars)
-    self.colors = [colors.white]*len(self.colors)
+    self.colors = [CONCEPTS.ENTITY_DEFAULT]*len(self.colors)
     for i in range(len(self.guests)):
       self.chars[i] = self.guests[i].char
       self.colors[i] = self.guests[i].color
@@ -233,7 +233,7 @@ class Fortress(BigEntity):
 
 class Mine(Entity):
   def __init__(self, battleground, x=-1, y=-1, power=50):
-    super(Mine, self).__init__(battleground, NEUTRAL_SIDE, x, y, 'X', colors.red)
+    super(Mine, self).__init__(battleground, NEUTRAL_SIDE, x, y, 'X', CONCEPTS.EFFECT_DAMAGE)
     self.power = power
 
   def can_be_attacked(self):
@@ -248,4 +248,3 @@ class Mine(Entity):
     if attacker.can_be_attacked():
       attacker.get_attacked(self)
     self.die()
-      

@@ -5,11 +5,10 @@ from effect import *
 from math import copysign
 import tactic
 
-import colors
-import libtcodpy as libtcod
+import CONCEPTS
 
 class Ares(General):
-  def __init__(self, battleground, side, x=-1, y=-1, name="Ares", color=colors.red):
+  def __init__(self, battleground, side, x=-1, y=-1, name="Ares", color=CONCEPTS.FACTION_SAVIOURS):
     super(Ares, self).__init__(battleground, side, x, y, name, color)
     self.max_hp = 200
     self.death_quote = "I lost a battle, but..."
@@ -26,4 +25,3 @@ class Ares(General):
                       "Slashes the left side", SingleTarget(self.bg)))
     self.skills.append(Skill(self, place_entity, 30, [Slash(self.bg, side=self.side)], "Round slash",
                       "Slashes all round", SingleTarget(self.bg)))
-

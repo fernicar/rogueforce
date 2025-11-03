@@ -5,13 +5,13 @@ from general import *
 from faction import *
 from window import *
 
-import colors
+import CONCEPTS
 import libtcodpy as libtcod
 
 import re
 
 KEYMAP_GENERALS = "QWERTYUIOP"
-MOVEGEN_PATTERN = re.compile("move_gen(\d) \((-?\d+),(-?\d+)\)")
+MOVEGEN_PATTERN = re.compile(r"move_gen(\d) \((-?\d+),(-?\d+)\)")
 
 class Scenario(Window):
   def __init__(self, battleground, side, factions, host = None, port = None, window_id = 0):
@@ -48,6 +48,7 @@ class Scenario(Window):
 
   def check_input(self, key, mouse, x, y):
     n = self.keymap_generals.find(chr(key.c).upper()) # Number of the general pressed
+    # return None  # Simplified for now
     if n != -1:
       g = self.factions[self.side].generals[n]
       if g.deployed:
@@ -122,18 +123,18 @@ class Scenario(Window):
                   return
 
   def render_side_panel(self, i, bar_length, bar_offset_x):
-    self.con_panels[i].print(bar_offset_x-1, 0, " Requisition", colors.white)
-    self.render_bar(self.con_panels[i], bar_offset_x, 1, bar_length, self.requisition[i], self.max_requisition, colors.dark_blue, colors.sky, colors.black)
+    self.con_panels[i].print(bar_offset_x-1, 0, " Requisition", CONCEPTS.UI_TEXT)
+    self.render_bar(self.con_panels[i], bar_offset_x, 1, bar_length, self.requisition[i], self.max_requisition, CONCEPTS.STATUS_PROGRESS_DARK, CONCEPTS.STATUS_PROGRESS_LIGHT, CONCEPTS.UI_BACKGROUND)
     line = 4
     for j in range(0, len(self.factions[i].generals)):
       g = self.factions[i].generals[j]
-      fg_color = g.color if g == self.selected_general else colors.white
+      fg_color = g.color if g == self.selected_general else CONCEPTS.STATUS_SELECTED
       self.con_panels[i].print(bar_offset_x-1, line, " " + g.name, fg_color)
-      libtcod.console_put_char_ex(self.con_panels[i], bar_offset_x-1, line+1, KEYMAP_GENERALS[j], g.color, colors.black)
+      libtcod.console_put_char_ex(self.con_panels[i], bar_offset_x-1, line+1, KEYMAP_GENERALS[j], g.color, CONCEPTS.UI_BACKGROUND)
       if not g.deployed:
-        self.render_bar(self.con_panels[i], bar_offset_x, line+1, bar_length, g.requisition, g.cost, colors.dark_blue, colors.sky, colors.black)
+        self.render_bar(self.con_panels[i], bar_offset_x, line+1, bar_length, g.requisition, g.cost, CONCEPTS.STATUS_PROGRESS_DARK, CONCEPTS.STATUS_PROGRESS_LIGHT, CONCEPTS.UI_BACKGROUND)
       else: 
-        self.render_bar(self.con_panels[i], bar_offset_x, line+1, bar_length, g.hp, g.max_hp, colors.red, colors.yellow, colors.black)
+        self.render_bar(self.con_panels[i], bar_offset_x, line+1, bar_length, g.hp, g.max_hp, CONCEPTS.STATUS_HEALTH_LOW, CONCEPTS.STATUS_HEALTH_MEDIUM, CONCEPTS.UI_BACKGROUND)
       line += 3
 
   def start_battle(self, generals):

@@ -3,12 +3,14 @@ from battleground import Battleground
 from general import *
 from window import *
 
-import colors
+import CONCEPTS
 import libtcodpy as libtcod
 
 import copy
 import re
 import sys
+
+from config import DEBUG
 
 KEYMAP_SKILLS = "QWERTYUIOP"
 KEYMAP_SWAP = "123456789"
@@ -17,10 +19,11 @@ KEYMAP_TACTICS = "ZXCVBNM"
 FLAG_PATTERN = re.compile(r"flag \((-?\d+),(-?\d+)\)")
 SKILL_PATTERN = re.compile(r"skill(\d) \((-?\d+),(-?\d+)\)")
 
-DEBUG = False
-
 class BattleWindow(Window):
   def __init__(self, battleground, side, host = None, port = None, window_id = 1):
+    if DEBUG:
+      sys.stdout.write("DEBUG: BattleWindow.__init__ started\n")
+    
     for i in [0,1]:
       battleground.generals[i].start_battle()
       battleground.generals[i].formation.place_minions()
@@ -30,7 +33,14 @@ class BattleWindow(Window):
     self.keymap_skills = KEYMAP_SKILLS[0:len(battleground.generals[side].skills)]
     self.keymap_swap = KEYMAP_SWAP[0:len(battleground.reserves[side])]
     self.keymap_tactics = KEYMAP_TACTICS[0:len(battleground.generals[side].tactics)]
+    
+    if DEBUG:
+      sys.stdout.write("DEBUG: About to call super(BattleWindow, self).__init__\n")
+    
     super(BattleWindow, self).__init__(battleground, side, host, port, window_id)
+    
+    if DEBUG:
+      sys.stdout.write("DEBUG: BattleWindow.__init__ completed\n")
 
   def ai_action(self, turn):
     ai_side = (self.side+1)%2
@@ -127,7 +137,7 @@ class BattleWindow(Window):
         skill_index = (y - 5) // 2  # Fixed integer division
         if 0 <= skill_index < len(self.bg.generals[i].skills):
           skill = self.bg.generals[i].skills[skill_index]
-          self.con_info.print(0, 0, skill.description, colors.white)
+          self.con_info.print(0, 0, skill.description, CONCEPTS.UI_TEXT)
           return
     super(BattleWindow, self).render_info(x, y)
 
@@ -143,19 +153,19 @@ class BattleWindow(Window):
         return color
     
     g_color = get_color_tuple(g.color)
-    black = colors.black
+    black = CONCEPTS.UI_BACKGROUND
     libtcod.console_put_char_ex(self.con_panels[i], bar_offset_x-1, 1, g.char, g_color, black)
-    self.render_bar(self.con_panels[i], bar_offset_x, 1, bar_length, g.hp, g.max_hp, colors.red, colors.yellow, black)
+    self.render_bar(self.con_panels[i], bar_offset_x, 1, bar_length, g.hp, g.max_hp, CONCEPTS.STATUS_HEALTH_LOW, CONCEPTS.STATUS_HEALTH_MEDIUM, black)
     line = 3
     for j in range(0, len(g.skills)):
       skill = g.skills[j]
-      white = colors.white
+      white = CONCEPTS.STATUS_SELECTED
       libtcod.console_put_char_ex(self.con_panels[i], bar_offset_x-1, line, KEYMAP_SKILLS[j], white, black)
       self.render_bar(self.con_panels[i], bar_offset_x, line, bar_length, skill.cd, skill.max_cd,
-        colors.dark_blue, colors.sky, black)
+        CONCEPTS.STATUS_PROGRESS_DARK, CONCEPTS.STATUS_PROGRESS_LIGHT, black)
       line += 2
     self.con_panels[i].print(3, line+1, str(self.bg.generals[i].minions_alive) + " " + self.bg.generals[i].minion.name + "s  ",
-      colors.white)
+      CONCEPTS.UI_TEXT)
     line = self.render_tactics(i) + 1
     swap_ready = g.swap_cd >= g.swap_max_cd
     for r in self.bg.reserves[i]:
@@ -163,31 +173,47 @@ class BattleWindow(Window):
       libtcod.console_put_char_ex(self.con_panels[i], bar_offset_x-1, line, r.char, r_color, black)
       if swap_ready:
         self.render_bar(self.con_panels[i], bar_offset_x, line, bar_length, r.hp, r.max_hp,
-                        colors.red, colors.yellow, black)
+                        CONCEPTS.STATUS_HEALTH_LOW, CONCEPTS.STATUS_HEALTH_MEDIUM, black)
       else:
         self.render_bar(self.con_panels[i], bar_offset_x, line, bar_length, g.swap_cd, g.swap_max_cd,
-                        colors.dark_blue, colors.sky, black)
+                        CONCEPTS.STATUS_PROGRESS_DARK, CONCEPTS.STATUS_PROGRESS_LIGHT, black)
       line += 2
 
   def render_tactics(self, i):
     bar_offset_x = 3
     line = 7 + len(self.bg.generals[i].skills)*2
     for s in range(0, len(self.bg.generals[i].tactics)):
-      fg_color = colors.red if self.bg.generals[i].tactics[s] == self.bg.generals[i].selected_tactic else colors.white
+      fg_color = CONCEPTS.STATUS_HEALTH_LOW if self.bg.generals[i].tactics[s] == self.bg.generals[i].selected_tactic else CONCEPTS.STATUS_SELECTED
       self.con_panels[i].print(bar_offset_x, line, KEYMAP_TACTICS[s] + ": " + self.bg.generals[i].tactic_quotes[s], fg = fg_color)
       line += 2
     return line
 
 from factions import doto
 if __name__=="__main__":
+  if DEBUG:
+    sys.stdout.write("DEBUG: Starting main execution\n")
+    sys.stdout.write(f"DEBUG: Command line args: {sys.argv}\n")
+    
   bg = Battleground(BG_WIDTH, BG_HEIGHT)
+  if DEBUG:
+    sys.stdout.write("DEBUG: Battleground created\n")
+    
   bg.generals = [doto.Pock(bg, 0, 3, 21), doto.Pock(bg, 1, 56, 21)]
+  if DEBUG:
+    sys.stdout.write("DEBUG: Generals created\n")
+    
   for i in [0,1]:
     bg.reserves[i] = [doto.Rubock(bg, i), doto.Bloodrotter(bg, i), doto.Ox(bg, i)]
+  if DEBUG:
+    sys.stdout.write("DEBUG: Reserves created\n")
+    
   for i in [0,1]:
     bg.generals[i].start_scenario()
     for g in bg.reserves[i]:
       g.start_scenario()
+      
+  if DEBUG:
+    sys.stdout.write("DEBUG: Scenarios started\n")
 
   if len(sys.argv) == 4: 
     battle = BattleWindow(bg, int(sys.argv[1]), sys.argv[2], int(sys.argv[3]))
@@ -195,4 +221,11 @@ if __name__=="__main__":
     battle = BattleWindow(bg, int(sys.argv[1]))
   else:
     battle = BattleWindow(bg, 0)
+    
+  if DEBUG:
+    sys.stdout.write("DEBUG: BattleWindow created, about to start loop\n")
+    
   battle.loop()
+  
+  if DEBUG:
+    sys.stdout.write("DEBUG: Loop ended\n")

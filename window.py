@@ -2,13 +2,16 @@ from area import SingleTarget
 from battleground import Battleground
 
 import colors
-import colors
+import CONCEPTS
 import libtcodpy as libtcod
 
 import socket
 import sys
 import textwrap
 import time
+
+# Import DEBUG from config module to avoid circular imports
+from config import DEBUG
 
 BG_WIDTH = 60
 BG_HEIGHT = 43
@@ -34,40 +37,67 @@ TURN_LAG = 1
 
 class Window(object):
   def __init__(self, battleground, side, host = None, port = None, window_id = 0):
+    if DEBUG:
+      sys.stdout.write("DEBUG: Window.__init__ started\n")
+      
     if host is not None:
+      if DEBUG:
+        sys.stdout.write(f"DEBUG: Creating network connection to {host}:{port}\n")
       self.network = Network(host, port)
     else:
+      if DEBUG:
+        sys.stdout.write("DEBUG: No network connection\n")
       self.network = None
     self.bg = battleground
     self.side = side
     self.window_id = window_id
 
+    if DEBUG:
+      sys.stdout.write("DEBUG: Setting up SDL/TCOD console\n")
+      sys.stdout.write(f"DEBUG: Window dimensions: {SCREEN_WIDTH}x{SCREEN_HEIGHT}\n")
+      
     libtcod.console_set_custom_font('arial10x10.png', libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_TCOD)
+    if DEBUG:
+      sys.stdout.write("DEBUG: Font set, initializing root console\n")
+    
+    # Initialize window with a reasonable size
     libtcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT, 'Rogue Force')
+    
+    if DEBUG:
+      sys.stdout.write("DEBUG: Root console initialized successfully\n")
+      sys.stdout.write("DEBUG: Game window should be visible now\n")
 
     self.messages = [{}, {}]
 
+    if DEBUG:
+      sys.stdout.write("DEBUG: Creating console objects\n")
     self.con_root = libtcod.console_new(SCREEN_WIDTH, SCREEN_HEIGHT)
     self.con_bg = libtcod.console_new(BG_WIDTH, BG_HEIGHT)
     self.con_info = libtcod.console_new(INFO_WIDTH, INFO_HEIGHT)
     self.con_msgs = libtcod.console_new(MSG_WIDTH, MSG_HEIGHT)
     self.con_panels = [libtcod.console_new(PANEL_WIDTH, PANEL_HEIGHT),
                        libtcod.console_new(PANEL_WIDTH, PANEL_HEIGHT)]
+    if DEBUG:
+      sys.stdout.write("DEBUG: Console objects created\n")
 
     self.game_msgs = []
     self.game_over = False
-    self.area_hover_color = colors.green
-    self.area_hover_color_invalid = colors.red
-    self.default_hover_color = colors.blue
+    self.area_hover_color = CONCEPTS.UI_HOVER_VALID
+    self.area_hover_color_invalid = CONCEPTS.UI_HOVER_INVALID
+    self.default_hover_color = CONCEPTS.UI_HOVER_DEFAULT
     self.default_hover_function = SingleTarget(self.bg).get_all_tiles
     self.hover_function = None
 
-    #self.render_all(0,0)
+    if DEBUG:
+      sys.stdout.write("DEBUG: Window.__init__ completed\n")
+    
+    # Initial render to show content immediately
+    self.render_all(0, 0)
 
   def ai_action(self, turn):
     return None
 
-  def check_input(self, key, x, y):
+  def check_input(self, key, mouse, x, y):
     return None
 
   def check_winner(self):
@@ -88,7 +118,7 @@ class Window(object):
     else:
       self.bg.hover_tiles(self.default_hover_function(x, y), self.default_hover_color)
 
-  def message(self, new_msg, color=colors.white):
+  def message(self, new_msg, color=CONCEPTS.UI_TEXT):
     #split the message if necessary, among multiple lines
     new_msg_lines = textwrap.wrap(new_msg, MSG_WIDTH)
     for line in new_msg_lines:
@@ -100,6 +130,9 @@ class Window(object):
       self.game_msgs.append((line, color))
 
   def loop(self):
+    if DEBUG:
+      sys.stdout.write("DEBUG: Entering main game loop\n")
+      
     turn = 0
     turn_time = 0.1
     key = libtcod.Key()
@@ -115,19 +148,25 @@ class Window(object):
             received = str(turn) + "#" + ai
           else:
             received = "D"
-        split = received.split("#")
+        # Ensure received is a string before splitting
+        received_str = str(received) if received else ""
+        split = received_str.split("#")
         if len(split) == 2:
-          self.messages[not self.side][int(split[0])] = split[1]
+          self.messages[not self.side][int(split[0])] = str(split[1])
 
       while time.time() - start < turn_time:
         libtcod.sys_check_for_event(libtcod.EVENT_ANY, key, mouse)
         (x, y) = (mouse.cx-BG_OFFSET_X, mouse.cy-BG_OFFSET_Y)
         if key.vk == libtcod.KEY_ESCAPE:
+          if DEBUG:
+            sys.stdout.write("DEBUG: Escape key pressed, exiting\n")
           return None
         # Check if window close button was clicked
         if libtcod.console_is_window_closed():
+          if DEBUG:
+            sys.stdout.write("DEBUG: Window closed, exiting\n")
           return None
-        s = self.check_input(key, libtcod.mouse_get_status(), x, y)
+        s = self.check_input(key, mouse, x, y)
         if s is not None:
           self.messages[self.side][turn] = s
 
@@ -142,25 +181,61 @@ class Window(object):
       if (turn % 100) == 0: self.clean_all()
       self.do_hover(x, y)
       turn +=1
+      
+      if DEBUG and (turn % 10 == 0):
+        sys.stdout.write(f"DEBUG: Turn {turn} completed\n")
+        
       self.render_all(x, y)
 
+    if DEBUG:
+      sys.stdout.write("DEBUG: Game loop ended\n")
     return winner
 
   def process_messages(self, turn):
     return False
 
   def render_all(self, x, y):
+    if DEBUG:
+      sys.stdout.write("DEBUG: render_all called\n")
+    
+    # Clear the main console first
+    libtcod.console_clear(self.con_root)
+    
+    # Draw the battleground
     self.bg.draw(self.con_bg)
+    if DEBUG:
+      sys.stdout.write("DEBUG: Battleground drawn\n")
+    
     self.render_info(x, y)
+    if DEBUG:
+      sys.stdout.write("DEBUG: Info rendered\n")
+      
     self.render_msgs()
+    if DEBUG:
+      sys.stdout.write("DEBUG: Messages rendered\n")
+      
     self.render_panels()
-    self.con_bg.blit(0, 0, BG_WIDTH, BG_HEIGHT, self.con_root, BG_OFFSET_X, BG_OFFSET_Y)
+    if DEBUG:
+      sys.stdout.write("DEBUG: Panels rendered\n")
+    
+    # Clear background console before blitting
+    libtcod.console_clear(self.con_bg)
+    self.bg.draw(self.con_bg)
+    
+    # Fix blit calls with correct parameter types for Pylance
+    if DEBUG:
+      sys.stdout.write("DEBUG: Starting blit operations\n")
+      
+    self.con_bg.blit(self.con_root, BG_OFFSET_X, BG_OFFSET_Y, 0, 0, BG_WIDTH, BG_HEIGHT)
     for i in [0,1]:
-      libtcod.console_blit(self.con_panels[i], 0, 0, PANEL_WIDTH, PANEL_HEIGHT, self.con_root, (PANEL_WIDTH+BG_WIDTH)*i, PANEL_OFFSET_Y)
-    self.con_info.blit(0, 0, MSG_WIDTH, MSG_HEIGHT, self.con_root, INFO_OFFSET_X, INFO_OFFSET_Y)
-    self.con_msgs.blit(0, 0, MSG_WIDTH, MSG_HEIGHT, self.con_root, MSG_OFFSET_X, MSG_OFFSET_Y)
-    libtcod.console_blit(self.con_root, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0)
+      self.con_panels[i].blit(self.con_root, (PANEL_WIDTH+BG_WIDTH)*i, PANEL_OFFSET_Y, 0, 0, PANEL_WIDTH, PANEL_HEIGHT)
+    self.con_info.blit(self.con_root, INFO_OFFSET_X, INFO_OFFSET_Y, 0, 0, MSG_WIDTH, MSG_HEIGHT)
+    self.con_msgs.blit(self.con_root, MSG_OFFSET_X, MSG_OFFSET_Y, 0, 0, MSG_WIDTH, MSG_HEIGHT)
+    libtcod.console_blit(self.con_root, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0)  # type: ignore[arg-type]
     libtcod.console_flush()
+    
+    if DEBUG:
+      sys.stdout.write("DEBUG: Screen flushed and should be visible\n")
 
   def render_bar(self, con, x, y, w, value, max_value, bar_bg_color, bar_fg_color, text_color):
     ratio = int(w*(float(value)/max_value))
@@ -174,7 +249,7 @@ class Window(object):
   def render_info(self, x, y):
     self.con_info.print(0, 0, " " * INFO_WIDTH)
     if self.bg.is_inside(x, y):
-      self.con_info.print(INFO_WIDTH-7, 0, "%02d/%02d" % (x, y), colors.white)
+      self.con_info.print(INFO_WIDTH-7, 0, "%02d/%02d" % (x, y), CONCEPTS.UI_TEXT)
       entity = self.bg.tiles[(x, y)].entity
       if entity:
         if(hasattr(entity, 'hp')):
@@ -199,7 +274,7 @@ class Window(object):
     pass
 
   def render_side_panel_clear(self, i, bar_length=11, bar_offset_x=4):
-    libtcod.console_set_default_background(self.con_panels[i], colors.black)
+    libtcod.console_set_default_background(self.con_panels[i], CONCEPTS.UI_BACKGROUND)
     libtcod.console_rect(self.con_panels[i], bar_offset_x-1, 0, bar_length+1, 40, True, libtcod.BKGND_SET)
 
   def update_all(self):

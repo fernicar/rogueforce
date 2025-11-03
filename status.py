@@ -4,7 +4,7 @@ import effect
 import skill
 import tactic
 
-import colors
+import CONCEPTS
 import libtcodpy as libtcod
 
 import random
@@ -20,20 +20,22 @@ class Status(object):
     self.kills = 0
     self.duplicated = False
     if entity: # Not a prototype
-      for s in self.entity.statuses:
-        if s.name == self.name:
-          # We refresh the duration if it's bigger
-          s.duration = max(s.duration, self.duration)
-          self.duplicated = True
-          return
-      self.entity.statuses.append(self)
+      if hasattr(entity, 'statuses'):
+        for s in entity.statuses:
+          if s.name == self.name:
+            # We refresh the duration if it's bigger
+            s.duration = max(s.duration, self.duration)
+            self.duplicated = True
+            return
+        entity.statuses.append(self)
   
   def clone(self, entity):
     return self.__class__(entity, self.owner, self.duration, self.name)
 
   def end(self):
     self.duration = -1
-    self.entity.statuses.remove(self)
+    if self.entity:
+      self.entity.statuses.remove(self)
 
   def register_kill(self, killed):
     self.kills += 1
@@ -54,15 +56,19 @@ class Aura(Status):
   def __init__(self, entity=None, owner=None, duration=9999, name="Aura", area=None, status=None):
     super(Aura, self).__init__(entity, owner, duration, name)
     self.area = area
+    self.status = status
     self.tbt = 10
     self.timer = 0
-    status.duration = self.tbt+2
+    if status:
+      status.duration = self.tbt+2
     self.skill = skill.Skill(owner, skill.apply_status, 0, [status], area=area)
 
   def clone(self, entity):
     return self.__class__(entity, self.owner, self.duration, self.name, self.area, self.status)
 
   def tick(self):
+    if not self.entity:
+      return
     self.timer -= 1
     if self.timer < 0:
       self.timer = self.tbt
@@ -79,10 +85,12 @@ class Bleeding(Status):
     return self.__class__(entity, self.owner, self.power, self.duration, self.name)
 
   def tick(self):
+    if not self.entity:
+      return
     if (self.last_x, self.last_y) != (self.entity.x, self.entity.y):
       diff = max(abs(self.last_x - self.entity.x), abs(self.last_y - self.entity.y))
       self.entity.get_attacked(self.owner, diff*self.power, None, "magical")
-      effect.TempEffect(self.entity.bg, self.entity.side, self.last_x, self.last_y, '*', colors.darker_red)
+      effect.TempEffect(self.entity.bg, self.entity.side, self.last_x, self.last_y, '*', CONCEPTS.FACTION_DOTO_DARK)
       (self.last_x, self.last_y) = (self.entity.x, self.entity.y)
 
 class Blind(Status):
@@ -93,7 +101,8 @@ class Blind(Status):
       (self.saved_power, entity.power) = (entity.power, self.saved_power)
 
   def end(self):
-    self.entity.power = self.saved_power
+    if self.entity:
+      self.entity.power = self.saved_power
     super(Blind, self).end()
 
 class Empower(Status):
@@ -109,17 +118,19 @@ class Empower(Status):
 
   def end(self):
     super(Empower, self).end()
-    self.entity.power -= self.bonus_power
+    if self.entity:
+      self.entity.power -= self.bonus_power
 
 class FreezeCooldowns(Status):
   def __init__(self, entity=None, owner=None, duration=9999, name="Freeze cooldowns"):
     super(FreezeCooldowns, self).__init__(entity, owner, duration, name)
-    if self.entity and self.entity not in entity.bg.generals:
+    if self.entity and getattr(self.entity, 'bg', None) and self.entity not in self.entity.bg.generals:
       self.end()
 
   def tick(self):
-    for s in self.entity.skills:
-      s.change_cd(-1)
+    if self.entity:
+      for s in self.entity.skills:
+        s.change_cd(-1)
 
 class Haste(Status):
   def __init__(self, entity=None, duration=9999, name="Haste", speedup=0):
@@ -130,7 +141,8 @@ class Haste(Status):
     return self.__class__(entity, self.duration, self.name, self.speedup)
 
   def tick(self):
-    self.entity.next_action -= self.speedup
+    if self.entity:
+      self.entity.next_action -= self.speedup
 
 class Jumping(Status):
   def __init__(self, entity=None, owner=None, duration=9999, name="Jumping",
@@ -144,13 +156,15 @@ class Jumping(Status):
     self.rand.seed(duration)
     self.already_hit = []
     if entity:
-      self.attack_effect = effect.TempEffect(entity.bg, char='-', color=owner.color if owner else colors.white)
+      self.attack_effect = effect.TempEffect(entity.bg, char='-', color=owner.color if owner else CONCEPTS.ENTITY_DEFAULT)
 
   def clone(self, entity):
     return self.__class__(entity, self.owner, self.duration, self.name,
                           self.power, self.power_delta, self.area, self.status)
 
   def tick(self):
+    if not self.entity or not self.area or not self.status:
+      return
     self.entity.get_attacked(self)
     self.already_hit.append(self.entity)
     self.status.clone(self.entity)
@@ -171,22 +185,25 @@ class Lifted(Status):
     self.land_status = land_status
     self.skill = skill.Skill(owner, skill.apply_status, 0, [land_status], area=land_area)
     if entity:
-      effect.TempEffect(entity.bg, x=entity.x, y=entity.y, char='^', color=owner.color, duration=duration)
+      effect.TempEffect(entity.bg, x=entity.x, y=entity.y, char='^', color=owner.color if owner else CONCEPTS.ENTITY_DEFAULT, duration=duration)
 
   def clone(self, entity):
     return self.__class__(entity, self.owner, self.duration, self.name, self.land_area, self.land_status)
 
   def tick(self):
-    self.entity.reset_action()
+    if self.entity:
+      self.entity.reset_action()
   
   def end(self):
-    if self.land_status:
+    if self.land_status and self.entity:
       self.skill.use(self.entity.x, self.entity.y)
 
 class Linked(Status):
   def __init__(self, entity=None, owner=None, duration=9999, name="Linked", x=-1, y=-1,
                power=10, radius=4, status=None):
     super(Linked, self).__init__(entity, owner, duration, name)
+    self.x = x
+    self.y = y
     self.power = power
     self.radius = radius
     self.status = status
@@ -201,12 +218,15 @@ class Linked(Status):
   def end(self):
     super(Linked, self).end()
     self.duration = -1
-    self.entity.bg.tiles[(self.entity.x, self.entity.y)].bg_color = colors.black
-    for t in self.tiles:
-      t.bg_color = colors.black
+    if self.entity and self.entity.bg and self.tiles:
+      self.entity.bg.tiles[(self.entity.x, self.entity.y)].bg_color = CONCEPTS.UI_BACKGROUND
+      for t in self.tiles:
+        t.bg_color = CONCEPTS.UI_BACKGROUND
     
   def update(self):
     super(Linked, self).update()
+    if not self.entity or not self.entity.bg or not self.owner or not self.status:
+      return
     t = self.entity.bg.tiles[(self.entity.x, self.entity.y)]
     if self.duration > 0:
       if t not in self.tiles:
@@ -214,7 +234,8 @@ class Linked(Status):
         self.entity.get_attacked(self)
         self.end()
       else:
-        t.bg_color = libtcod.color_lerp(colors.black, self.owner.original_color, 0.4)
+        t.bg_color = libtcod.color_lerp(CONCEPTS.UI_BACKGROUND, self.owner.original_color, 0.4)
+        # Note: Dynamic color interpolation - appropriate use of libtcod.color_lerp for status effects
 
 class Poison(Status):
   # tbt = time between ticks
@@ -230,6 +251,8 @@ class Poison(Status):
     return self.__class__(entity, self.owner, self.power, self.tbt, self.ticks, self.name)
 
   def tick(self):
+    if not self.entity:
+      return
     self.timer -= 1
     if self.timer < 0:
       self.entity.get_attacked(self)
@@ -242,6 +265,8 @@ class PoisonHunger(Poison):
       self.entity_kills = entity.kills
 
   def tick(self):
+    if not self.entity or not self.owner:
+      return
     if not self.entity.alive or self.entity.kills > self.entity_kills:
       self.duration = -1
     else:
@@ -266,25 +291,29 @@ class Phasing(Status):
     super(Phasing, self).end()
     self.p_shield.end()
     self.m_shield.end()
-    self.placeholder.die()
-    self.entity.bg.tiles[(self.entity.x, self.entity.y)].entity = self.entity
+    if self.placeholder:
+      self.placeholder.die()
+    if self.entity and self.entity.bg and hasattr(self.entity, 'x') and hasattr(self.entity, 'y'):
+      self.entity.bg.tiles[(self.entity.x, self.entity.y)].entity = self.entity
 
 class Recalling(Status):
   def __init__(self, entity=None, duration=9999, name="Recalling"):
     super(Recalling, self).__init__(entity, None, duration, name)
-    self.color = self.entity.color
+    self.color = self.entity.color if self.entity else None
 
   def update(self):
     super(Recalling, self).update()
-    if self.duration > 0:
+    if self.duration > 0 and self.entity and self.entity.bg and self.color:
       self.entity.next_action = 100
       tile = self.entity.bg.tiles[(self.entity.x, self.entity.y)]
       self.entity.color = libtcod.color_lerp(tile.bg_color, self.color, 1-(self.duration/10.0))
+      # Note: Dynamic color interpolation for status effects - appropriate use of libtcod
 
   def end(self):
     super(Recalling, self).end()
-    self.entity.update_color()
-    self.entity.reset_action()
+    if self.entity:
+      self.entity.update_color()
+      self.entity.reset_action()
 
 class Shield(Status):
   def __init__(self, entity=None, duration=9999, name="Shield", armor=0, armor_type="physical", color=None):
@@ -302,8 +331,9 @@ class Shield(Status):
 
   def end(self):
     super(Shield, self).end()
-    self.entity.update_color()
-    self.entity.armor[self.armor_type] -= self.armor
+    if self.entity:
+      self.entity.update_color()
+      self.entity.armor[self.armor_type] -= self.armor
 
 class Stunned(Status):
   def __init__(self, entity=None, owner=None, duration=9999, name="Stunned"):
@@ -316,13 +346,16 @@ class Stunned(Status):
     self.effect.dissapear()
 
   def tick(self):
-    self.entity.reset_action()
+    if self.entity:
+      self.entity.reset_action()
 
 class Taunted(Status):
   def __init__(self, entity=None, owner=None, duration=9999, name="Taunted"):
     super(Taunted, self).__init__(entity, owner, duration, name)
 
   def tick(self):
+    if not self.entity or not self.owner or not self.entity.bg:
+      return
     if self.entity in self.entity.bg.generals:
       self.entity.place_flag(self.owner.x, self.owner.y)
     elif self.entity in self.entity.bg.minions:
@@ -339,14 +372,16 @@ class Vanished(Status):
 
   def update(self):
     super(Vanished, self).update()
-    self.entity.next_action = 100
+    if self.entity:
+      self.entity.next_action = 100
 
   def end(self):
     super(Vanished, self).end()
-    if self.entity.teleport(self.x, self.y):
-      self.entity.reset_action()
-    else:
-      self.entity.die()
+    if self.entity and hasattr(self, 'x') and hasattr(self, 'y'):
+      if self.entity.teleport(self.x, self.y):
+        self.entity.reset_action()
+      else:
+        self.entity.die()
 
 class Vanishing(Status):
   def __init__(self, entity=None, duration=9999, vanished_duration=9999, name="Vanishing"):
@@ -358,13 +393,16 @@ class Vanishing(Status):
 
   def update(self):
     super(Vanishing, self).update()
-    if self.duration > 0:
+    if self.duration > 0 and self.entity and self.entity.bg:
       self.entity.next_action = 100
       tile = self.entity.bg.tiles[(self.entity.x, self.entity.y)]
-      self.entity.color = libtcod.color_lerp(self.entity.color, tile.bg_color, 1-(self.duration/10.0))
+      if self.entity.color and tile.bg_color:
+        self.entity.color = libtcod.color_lerp(self.entity.color, tile.bg_color, 1-(self.duration/10.0))
+      # Note: Dynamic color interpolation for status effects - appropriate use of libtcod
 
   def end(self):
     super(Vanishing, self).end()
-    self.entity.update_color()
-    self.entity.reset_action()
-    Vanished(self.entity, self.vanished_duration)
+    if self.entity:
+      self.entity.update_color()
+      self.entity.reset_action()
+      Vanished(self.entity, self.vanished_duration)

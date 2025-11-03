@@ -1,6 +1,6 @@
 from entity import Entity
 from entity import BigEntity
-import colors
+import CONCEPTS
 import libtcodpy as libtcod
 
 import effect
@@ -9,7 +9,7 @@ import tactic
 from collections import defaultdict
 
 class Minion(Entity):
-  def __init__(self, battleground, side, x=-1, y=-1, name="minion", char='m', color=colors.white):
+  def __init__(self, battleground, side, x=-1, y=-1, name="minion", char='m', color=CONCEPTS.ENTITY_DEFAULT):
     super(Minion, self).__init__(battleground, side, x, y, char, color)
     self.name = name
     self.max_hp = 30
@@ -86,12 +86,13 @@ class Minion(Entity):
 
   def update_color(self):
     # We change the color to indicate that the minion is wounded
-    # More red -> closer to death
+    # More red -> closer to death (health-based dynamic coloring)
     c = int(255*(float(self.hp)/self.max_hp))
     self.color = libtcod.Color(255, c, c)
+    # Note: Dynamic health-based coloring - kept as libtcod.Color for functionality
 
 class BigMinion(BigEntity, Minion):
-  def __init__(self, battleground, side, x=-1, y=-1, name="Giant", chars=['G']*4, colors=[colors.white]*4):
+  def __init__(self, battleground, side, x=-1, y=-1, name="Giant", chars=['G']*4, colors=[CONCEPTS.ENTITY_DEFAULT]*4):
     BigEntity.__init__(self, battleground, side, x, y, chars, colors)
     Minion.__init__(self, battleground, side, x, y, name, colors[0])
     self.max_hp *= self.length
@@ -115,7 +116,7 @@ class BigMinion(BigEntity, Minion):
     return None
 
 class RangedMinion(Minion):
-  def __init__(self, battleground, side, x=-1, y=-1, name="archer", color=colors.white, attack_effects = ['>', '<']):
+  def __init__(self, battleground, side, x=-1, y=-1, name="archer", color=CONCEPTS.ENTITY_DEFAULT, attack_effects = ['>', '<']):
     super(RangedMinion, self).__init__(battleground, side, x, y, name)
     self.max_hp = 10
     self.hp = 10

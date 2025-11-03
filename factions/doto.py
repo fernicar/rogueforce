@@ -5,13 +5,12 @@ from sieve import *
 from skill import *
 from status import *
 
-import colors
-import libtcodpy as libtcod
+import CONCEPTS
 
 import random
 
 class Bloodrotter(General):
-  def __init__(self, battleground, side, x=-1, y=-1, name="Bloodrotter", color=colors.darker_red):
+  def __init__(self, battleground, side, x=-1, y=-1, name="Bloodrotter", color=CONCEPTS.FACTION_DOTO_DARK):
     super(Bloodrotter, self).__init__(battleground, side, x, y, name, color)
     self.max_hp = 250
     self.power = 11
@@ -24,7 +23,7 @@ class Bloodrotter(General):
     self.skills.append(Skill(self, apply_statuses, 90,
                        [[Empower(None, self, bloodrage_duration, "Bloodrage empower", 1),
                          FreezeCooldowns(None, self, bloodrage_duration, "Bloodrage silence"),
-                         Poison(None, self, 1, 1, bloodrage_duration/2, "Bloodrage poison")]],
+                         Poison(None, self, 1, 1, int(bloodrage_duration/2), "Bloodrage poison")]],
                        "Bloodrage", "Gives higher power to a unit, but takes damage and silence",
                       SingleTarget(self.bg, is_unit, self, is_inrange_close)))
     self.skills.append(DummySkill("Blood Bath", "Gain health for every unit killed"))
@@ -52,7 +51,7 @@ class Bloodrotter(General):
     super(Bloodrotter, self).update()
 
 class Ox(General):
-  def __init__(self, battleground, side, x=-1, y=-1, name="Ox", color=colors.dark_red):
+  def __init__(self, battleground, side, x=-1, y=-1, name="Ox", color=CONCEPTS.FACTION_DOTO_MEDIUM):
     super(Ox, self).__init__(battleground, side, x, y, name, color)
     self.rand = random.Random()
     self.max_hp = 400
@@ -97,7 +96,7 @@ class Ox(General):
       return skill_used
 
 class Pock(General):
-  def __init__(self, battleground, side, x=-1, y=-1, name="Pock", color=colors.sky):
+  def __init__(self, battleground, side, x=-1, y=-1, name="Pock", color=CONCEPTS.FACTION_DOTO_LIGHT):
     super(Pock, self).__init__(battleground, side, x, y, name, color)
     self.max_hp = 250
     self.armor["physical"] = 1
@@ -133,13 +132,13 @@ class Pock(General):
     if skill_used:
       if i == self.orb_index:
         self.orb = self.bg.tiles[(self.x, self.y)].effects[-1]
-        self.orb.path = Line(self.bg, origin=(self.x, self.y)).get_tiles(x, y)[:20]
+        self.orb.path = list(Line(self.bg, origin=(self.x, self.y)).get_tiles(x, y))[:20]
       elif i == self.jaunt_index:
         self.orb.dissapear()
     return skill_used
 
 class Rubock(General):
-  def __init__(self, battleground, side, x=-1, y=-1, name="Rubock", color=colors.green):
+  def __init__(self, battleground, side, x=-1, y=-1, name="Rubock", color=CONCEPTS.FACTION_DOTO_PURE):
     super(Rubock, self).__init__(battleground, side, x, y, name, color)
     self.copied_skill = 2
     self.armor["physical"] = 1
@@ -152,7 +151,7 @@ class Rubock(General):
                       SingleTarget(self.bg, is_enemy, self, is_inrange_close)))
     self.skills.append(Skill(self, apply_status, 40, [Jumping(None, self, 1, "Fade Bolt", 10, -1, 
                       Circle(self.bg, is_enemy, self, radius=2), Empower(duration = 20, name="Fade Bolt debuff",
-                       power_ratio=-0.25))], "Fade Bolt", "Travels between units damaging and weakening them",
+                       power_ratio=-1))], "Fade Bolt", "Travels between units damaging and weakening them",
                       SingleTarget(self.bg, is_enemy, self, is_inrange_close)))
     self.skills.append(DummySkill("Null Field", "Grants magic resistance to all allies"))
     self.skills.append(Skill(self, copy_spell, 140, [], "Spell Steal", "Copies the last spell used by the enemy",
@@ -163,4 +162,3 @@ class Rubock(General):
     super(Rubock, self).start_battle()
     Aura(self, self, name="Null Field aura", area=Circle(self.bg, is_ally, self, radius=6),
         status=Shield(name="Null Field", armor=2, armor_type="magical"))
-
