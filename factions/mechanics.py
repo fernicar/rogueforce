@@ -13,6 +13,9 @@ class Flappy(General):
     super(Flappy, self).__init__(battleground, side, x, y, name, color)
     self.death_quote = "I'll be back, like a boo... me..."
     self.minion = Minion(self.bg, self.side, name="goblin")
+    
+    # Set character name for sprite system
+    self.character_name = "flappy"
 
   def draw_slingshot(self):
     if self.side:

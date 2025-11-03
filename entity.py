@@ -2,6 +2,13 @@ import concepts
 import libtcodpy as libtcod
 import cmath as math
 
+# Import sprite system (will be used by subclasses)
+try:
+    from entity_sprite_mixin import SpriteEntityMixin
+    SPRITES_AVAILABLE = True
+except ImportError:
+    SPRITES_AVAILABLE = False
+
 NEUTRAL_SIDE = 555
 
 class Entity(object):

@@ -33,6 +33,13 @@ class General(Minion):
     self.last_skill_used = -1
     self.armor["physical"] = 2
     self.power = 10
+    
+    # Initialize sprite system (each general subclass should set character_name)
+    self.character_name = name.lower()
+    try:
+      self.init_sprite_system(self.character_name)
+    except:
+      pass
 
   def ai_action(self, turn):
     return None

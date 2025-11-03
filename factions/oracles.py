@@ -27,6 +27,9 @@ class Gemekaa(General):
     self.formation = formation.InvertedWedge(self, 3)
     self.minion = Slave(self.bg, self.side)
     self.starting_minions = 251
+    
+    # Set character name for sprite system
+    self.character_name = "gemekaa"
 
   def initialize_skills(self):
     self.skills = []
