@@ -12,9 +12,9 @@ This phase focuses on completely removing libtcod/libtcodpy dependencies and rep
 # Create required directories
 mkdir -p doc
 mkdir -p test
-mkdir -p assets/sound
-mkdir -p assets/music
-mkdir -p assets/sprite/game
+mkdir -p asset/sound
+mkdir -p asset/music
+mkdir -p asset/sprite/game
 ```
 
 ### A.2: Create move2doc.py Utility
@@ -88,7 +88,7 @@ GRID_HEIGHT = 43
 TILE_SIZE = 16  # Pixels per tile
 
 # Asset paths
-ASSET_ROOT = 'assets'
+ASSET_ROOT = 'asset'
 SPRITE_PATH = f'{ASSET_ROOT}/sprite'
 SOUND_PATH = f'{ASSET_ROOT}/sound'
 MUSIC_PATH = f'{ASSET_ROOT}/music'
@@ -107,7 +107,7 @@ COLOR_BACKGROUND = (20, 20, 40)
 
 ## Part B: Asset Management System
 
-### B.1: Create assets/asset_loader.py
+### B.1: Create asset/asset_loader.py
 
 ```python
 """
@@ -607,9 +607,9 @@ class TestPhase1Setup(unittest.TestCase):
         required_dirs = [
             'doc',
             'test',
-            'assets/sound',
-            'assets/music',
-            'assets/sprite/game'
+            'asset/sound',
+            'asset/music',
+            'asset/sprite/game'
         ]
         
         for dir_path in required_dirs:
@@ -644,7 +644,7 @@ class TestPhase1Setup(unittest.TestCase):
         files_to_check = [
             'config.py',
             'rendering/renderer.py',
-            'assets/asset_loader.py'
+            'asset/asset_loader.py'
         ]
         
         for filepath in files_to_check:
@@ -733,7 +733,7 @@ Create `doc/PHASE1_CHECKLIST.md`:
 ## Success Criteria for Phase 1
 
 1. ✅ **No TCOD imports** - All `import libtcodpy` and `import libtcod` removed
-2. ✅ **Project structure** - doc/, test/, assets/ properly organized
+2. ✅ **Project structure** - doc/, test/, asset/ properly organized
 3. ✅ **DEBUG mode works** - Missing assets don't crash game
 4. ✅ **Pygame rendering** - Basic window opens and displays
 5. ✅ **Asset loading** - Character sprites load with proper scaling
