@@ -13,7 +13,10 @@ class Renderer:
 
     def __init__(self, title="Rogue Force"):
         pygame.init()
-        # pygame.mixer.init() # Disabled for now to avoid ALSA errors in sandbox
+        try:
+            pygame.mixer.init()
+        except pygame.error as e:
+            print(f"[AUDIO ERROR] Could not initialize mixer: {e}")
 
         self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
         pygame.display.set_caption(title)

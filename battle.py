@@ -3,7 +3,7 @@ from battleground import Battleground
 from general import *
 from window import *
 
-from config import COLOR_WHITE, STATUS_HEALTH_LOW, STATUS_HEALTH_MEDIUM, STATUS_PROGRESS_DARK, STATUS_PROGRESS_LIGHT, STATUS_SELECTED, UI_BACKGROUND
+from config import COLOR_WHITE, COLOR_BACKGROUND
 
 import copy
 import re
@@ -166,9 +166,10 @@ class BattleWindow(Window):
       line += 2
 
   def render_tactics(self, i, x_offset, line):
+    COLOR_RED = (255, 0, 0)
     for s in range(0, len(self.bg.generals[i].tactics)):
-      text = f"{KEYMAP_TACTICS[s]}: {self.bg.generals[i].tactic_quotes[s]}"
-      color = STATUS_HEALTH_LOW if self.bg.generals[i].tactics[s] == self.bg.generals[i].selected_tactic else STATUS_SELECTED
+      text = f"{pygame.key.name(self.keymap_tactics[s]).upper()}: {self.bg.generals[i].tactic_quotes[s]}"
+      color = COLOR_RED if self.bg.generals[i].tactics[s] == self.bg.generals[i].selected_tactic else COLOR_WHITE
       self.renderer.draw_text(text, x_offset, line * 20, color)
       line += 2
     return line

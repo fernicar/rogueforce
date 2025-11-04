@@ -32,8 +32,6 @@ class Scenario(Window):
     self.deploy_general(factions[1].generals[1])
     self.i += 1
     self.deploy_general(factions[1].generals[0])
-    
-    self.render_all()
 
   def apply_requisition(self, general):
     if general.deployed: return
@@ -48,16 +46,12 @@ class Scenario(Window):
       general.requisition += self.requisition[general.side]
       self.requisition[general.side] = 0
 
-  def check_input(self):
-    keys = pygame.key.get_pressed()
-    x, y = pygame.mouse.get_pos()
-
+  def check_input(self, keys, mouse, grid_x, grid_y):
     for i, key in enumerate(self.keymap_generals):
         if keys[key]:
             g = self.factions[self.side].generals[i]
             if g.deployed:
                 self.selected_general = g
-                grid_x, grid_y = self.get_grid_coords(x, y)
                 if not self.bg.is_inside(grid_x, grid_y):
                     return
                 return "move_gen{0} ({1},{2})\n".format(i, grid_x, grid_y)
@@ -138,7 +132,11 @@ class Scenario(Window):
     for j in range(0, len(self.factions[i].generals)):
       g = self.factions[i].generals[j]
       fg_color = g.color if g == self.selected_general else COLOR_WHITE
-      self.renderer.draw_text(f"{pygame.key.name(self.keymap_generals[j]).upper()}: {g.name}", x_offset, PANEL_OFFSET_Y + line * 15, fg_color)
+      if i == self.side:
+        text = f"{pygame.key.name(self.keymap_generals[j]).upper()}: {g.name}"
+      else:
+        text = g.name
+      self.renderer.draw_text(text, x_offset, PANEL_OFFSET_Y + line * 15, fg_color)
       if not g.deployed:
         self.renderer.draw_text(f"Cost: {g.cost}", x_offset, PANEL_OFFSET_Y + (line + 1) * 15)
       else:

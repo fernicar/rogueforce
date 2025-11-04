@@ -3,7 +3,7 @@ from battleground import Battleground
 from rendering.renderer import Renderer
 from assets.asset_loader import asset_loader
 import pygame
-from config import COLOR_WHITE, COLOR_BACKGROUND, COLOR_BLACK
+from config import COLOR_WHITE, COLOR_BACKGROUND, COLOR_BLACK, TILE_SIZE
 
 import socket
 import sys
@@ -69,7 +69,7 @@ class Window(object):
   def ai_action(self, turn):
     return None
 
-  def check_input(self):
+  def check_input(self, keys, mouse, x, y):
     return None
 
   def check_winner(self):
@@ -93,11 +93,8 @@ class Window(object):
       self.bg.hover_tiles(self.default_hover_function(grid_x, grid_y), self.default_hover_color)
 
   def get_grid_coords(self, mouse_x, mouse_y):
-      # This is a placeholder conversion. This will need to be updated
-      # when the camera and viewport are fully implemented.
-      tile_size = 16 # This should come from config
-      grid_x = (mouse_x - BG_OFFSET_X) // tile_size
-      grid_y = (mouse_y - BG_OFFSET_Y) // tile_size
+      grid_x = (mouse_x - BG_OFFSET_X) // TILE_SIZE
+      grid_y = (mouse_y - BG_OFFSET_Y) // TILE_SIZE
       return grid_x, grid_y
 
   def message(self, new_msg, color=COLOR_WHITE):
@@ -134,7 +131,11 @@ class Window(object):
           if event.key == pygame.K_ESCAPE:
             self.game_over = True
 
-      s = self.check_input()
+      keys = pygame.key.get_pressed()
+      mouse = pygame.mouse.get_pressed()
+      mouse_x, mouse_y = pygame.mouse.get_pos()
+      grid_x, grid_y = self.get_grid_coords(mouse_x, mouse_y)
+      s = self.check_input(keys, mouse, grid_x, grid_y)
       if s is not None:
         self.messages[self.side][turn] = s
 
@@ -148,14 +149,13 @@ class Window(object):
       winner = self.check_winner()
       if (turn % 100) == 0: self.clean_all()
 
-      mouse_x, mouse_y = pygame.mouse.get_pos()
       self.do_hover(mouse_x, mouse_y)
       turn +=1
       
       if DEBUG and (turn % 10 == 0):
         sys.stdout.write(f"DEBUG: Turn {turn} completed\n")
         
-      self.render_all()
+      self.render_all(grid_x, grid_y)
       self.renderer.update()
 
     if DEBUG:
@@ -165,7 +165,7 @@ class Window(object):
   def process_messages(self, turn):
     return False
 
-  def render_all(self):
+  def render_all(self, x, y):
     self.renderer.clear()
     self.renderer.draw_tile_grid()
     
@@ -180,13 +180,13 @@ class Window(object):
                 self.renderer.draw_text(tile.entity.character_name, tile.x * 16 + BG_OFFSET_X, tile.y * 16 + BG_OFFSET_Y, tile.entity.color)
 
     self.render_panels()
-    self.render_info()
+    self.render_info(x, y)
     self.render_msgs()
 
   def render_panels(self):
     pass
 
-  def render_info(self):
+  def render_info(self, x, y):
     pass
 
   def render_msgs(self):
