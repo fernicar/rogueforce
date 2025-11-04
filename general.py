@@ -13,13 +13,13 @@ import math
 
 class General(Minion):
   def __init__(self, battleground, side, x=-1, y=-1, name="General", color=COLOR_WHITE):
-    super(General, self).__init__(battleground, side, x, y, name, name[0], color)
+    super(General, self).__init__(battleground, side, x, y, name, name, color)
     self.max_hp = 300
     self.cost = 250
     self.death_quote = "..."
     self.flag = None
     self.formation = Rows(self)
-    self.minion = Minion(self.bg, self.side, char='b' if side else 'd')
+    self.minion = Minion(self.bg, self.side, character_name='minion_b' if side else 'minion_d')
     self.skills = []
     self.starting_minions = 101
     self.tactics = [tactic.stop, tactic.forward, tactic.backward, tactic.go_sides, tactic.go_center, tactic.attack_general, tactic.defend_general]
@@ -77,7 +77,6 @@ class General(Minion):
     self.initialize_skills()
     self.command_tactic(0)
     self.swap_cd = 200
-    #self.formation.place_minions()
 
   def start_scenario(self):
     self.deployed = False
@@ -104,9 +103,8 @@ class General(Minion):
   def update(self):
     if not self.alive:
       return
+    super(General, self).update()
     for s in self.skills:
-      s.update()
-    for s in self.statuses:
       s.update()
     self.swap_cd = min(self.swap_cd+1, self.swap_max_cd)
     if self.next_action <= 0:
@@ -132,7 +130,6 @@ class General(Minion):
       if skill.use(x, y):
         for s in self.skills:
           s.change_cd(-5)
-        #skill.change_max_cd(skill.max_cd)
         skill.reset_cd()
         self.last_skill_used = i
         return True
@@ -161,20 +158,14 @@ class Conway(General):
         (x, y) = (tile.x+i, tile.y+j)
         if (i, j) == (0, 0) or not self.bg.is_inside(x, y): continue
         if self.bg.tiles[(x, y)].entity is not None and self.bg.tiles[(x, y)].entity.is_ally(self): neighbours += 1
-    # Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
     if tile.entity is None and neighbours == 3 and tile.passable: self.next_gen_births.append(tile)
-    # Any live cell...
     elif tile.entity is not None and tile.entity.is_ally(self) and tile.entity != self:
-      # ...with more than three live neighbours dies, as if by overcrowding.
       if neighbours > 3: self.next_gen_deaths.append(tile)
-      # ...with fewer than two live neighbours dies, as if caused by under-population.
       elif neighbours < 2: self.next_gen_deaths.append(tile)
-      # ...with two or three live neighbours lives on to the next generation.
-      # No need to do any action.
 
   def update(self):
     if not self.alive: return
-    if self.selected_tactic == tactic.null: # Live life
+    if self.selected_tactic == tactic.null:
       if self.next_action <= 0:
         self.reset_action()
         self.next_gen_births = []
@@ -196,10 +187,9 @@ class Emperor(General):
   def __init__(self, battleground, side, x=-1, y=-1, name="Emperor", color=COLOR_WHITE):
     super(Emperor, self).__init__(battleground, side, x, y, name, color)
     self.max_hp = 60
-    #self.start_quote = "May this night carry my will and these old stars forever remember this night."
     self.death_quote = "Nightspirit... embrace my soul..."
     self.human_form = True
-    self.minion = RangedMinion(self.bg, self.side, name="wizard")
+    self.minion = RangedMinion(self.bg, self.side, name="wizard", character_name="wizard")
     self.minion.attack_effects = [')', '(']
     self.starting_minions = 0
     self.transform_index = 3
@@ -218,7 +208,6 @@ class Emperor(General):
                              AllBattleground(self.bg, is_enemy_general, self)))
     self.skills.append(Skill(self, water_pusher, 50, [], "Towards the Pantheon", "", SingleTarget(self.bg)))
     self.skills.append(Skill(self, null, 200, [], "This shouldn't be showed", ""))
-    # We don't need that last quote because it will be changed and pulled in transform()
 
   def start_battle(self):
     super(Emperor, self).start_battle()
@@ -226,12 +215,12 @@ class Emperor(General):
 
   def transform(self):
     if not self.human_form:
-      self.char = 'E'
+      self.character_name = 'Emperor'
       self.name = "Emperor"
       return
     self.human_form = False
     self.hp = self.max_hp
-    self.char = 'N'
+    self.character_name = 'Nightspirit'
     self.name = "Nightspirit"
     self.original_color = COLOR_WHITE
     self.color = self.original_color
@@ -242,7 +231,6 @@ class Emperor(General):
                              AllBattleground(self.bg, is_ally_minion, self)))
     self.skills.append(Skill(self, sonic_waves, 250, [50, 50],
                              "O'Nightspirit... I am one with thee, I am the eternal power, I am the Emperor!", ""))
-    # Last quote is shared with the human form skill
     return True
 
   def use_skill(self, i, x, y):

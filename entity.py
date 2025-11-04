@@ -1,15 +1,18 @@
 from config import COLOR_WHITE
+from rendering.animation import Animation
+from assets.asset_loader import asset_loader
 import cmath as math
 
 NEUTRAL_SIDE = 555
 
 class Entity(object):
-  def __init__(self, battleground, side=NEUTRAL_SIDE, x=-1, y=-1, sprite_name=' ', color=COLOR_WHITE):
+  def __init__(self, battleground, side=NEUTRAL_SIDE, x=-1, y=-1, sprite_name=' ', character_name=None, color=COLOR_WHITE):
     self.bg = battleground
     self.x = x
     self.y = y
     self.side = side
     self.sprite_name = sprite_name
+    self.character_name = character_name if character_name else sprite_name
     self.original_sprite_name = sprite_name
     self.color = color
     self.original_color = color
@@ -24,6 +27,12 @@ class Entity(object):
     self.attack_type = "physical"
     self.kills = 0
     self.owner = None
+
+    if self.character_name:
+        sprites = asset_loader.get_character_sprites(self.character_name)
+        self.animation = Animation(sprites)
+    else:
+        self.animation = None
 
   def can_be_attacked(self):
     return False
@@ -47,7 +56,7 @@ class Entity(object):
 
   def clone(self, x, y): 
     if self.bg.is_inside(x, y) and self.bg.tiles[(x, y)].entity is None and self.bg.tiles[(x, y)].is_passable(self):
-      return self.__class__(self.bg, self.side, x, y, self.sprite_name, self.original_color)
+      return self.__class__(self.bg, self.side, x, y, self.sprite_name, self.character_name, self.original_color)
     return None
 
   def die(self):
@@ -79,6 +88,7 @@ class Entity(object):
       next_tile.entity = self
       self.x += dx
       self.y += dy
+      if self.animation: self.animation.set_state('walk')
       return True
     return False
 
@@ -89,6 +99,8 @@ class Entity(object):
         return True
       else:
         self.path.insert(0, next_tile)
+    elif self.animation and self.animation.current_state == 'walk':
+        self.animation.set_state('idle')
     return False
 
   def register_kill(self, killed):
@@ -110,10 +122,12 @@ class Entity(object):
   def update(self):
     for s in self.statuses:
       s.update()
+    if self.animation:
+        self.animation.update()
 
 class BigEntity(Entity):
   def __init__(self, battleground, side, x, y, sprite_names=["a", "b", "c", "d"], colors=[COLOR_WHITE]*4):
-    super(BigEntity, self).__init__(battleground, side, x, y, sprite_names[0], colors[0])
+    super(BigEntity, self).__init__(battleground, side, x, y, sprite_names[0], None, colors[0])
     self.sprite_names = sprite_names
     self.colors = colors
     self.length = int(math.sqrt(len(self.sprite_names)).real)
@@ -179,12 +193,9 @@ class Fortress(BigEntity):
     return False
 
   def get_connections(self):
-    # Gather all tiles inside and surrounding the fortress
     starting_tiles = [(self.x+i, self.y+j) for i in range(-1,3) for j in range(-1,3)] 
-    # Remove those inside it
     checked = [(self.x+i, self.y+j) for i in range(0,2) for j in range(0,2)]
     starting_tiles = filter(lambda t: self.bg.tiles[t].passable and t not in checked, starting_tiles)
-    # Try every reachable tile from the fortress and save the connections
     for starting in starting_tiles:
       tiles = [starting]
       while tiles:

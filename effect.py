@@ -1,14 +1,20 @@
 import entity
 import status
 
-from config import COLOR_WHITE, EFFECT_ATTACK_LIGHT, EFFECT_ATTACK_MEDIUM, EFFECT_DAMAGE, EFFECT_WAVE
+from config import COLOR_WHITE
 from math import copysign
 import itertools
 
+# Define replacement colors for the old EFFECT_* constants
+EFFECT_ATTACK_LIGHT = (255, 255, 0) # Yellow
+EFFECT_ATTACK_MEDIUM = (255, 165, 0) # Orange
+EFFECT_DAMAGE = (255, 0, 0) # Red
+EFFECT_WAVE = (0, 0, 255) # Blue
+
 class Effect(entity.Entity):
-  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, char=' ', color=COLOR_WHITE):
+  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, character_name=' ', color=COLOR_WHITE):
     saved = battleground.tiles[(x, y)].entity
-    super(Effect, self).__init__(battleground, side, x, y, char, color)
+    super(Effect, self).__init__(battleground, side, x, y, character_name, character_name, color)
     self.bg.tiles[(x, y)].entity = saved
     self.bg.tiles[(x, y)].effects.append(self)
     if x != -1:
@@ -19,7 +25,7 @@ class Effect(entity.Entity):
 
   def clone(self, x, y): 
     if self.bg.is_inside(x, y):
-      return self.__class__(self.bg, self.side, x, y, self.char, self.original_color)
+      return self.__class__(self.bg, self.side, x, y, self.character_name, self.original_color)
     return None
 
   def dissapear(self):
@@ -65,8 +71,8 @@ class Arrow(Effect):
     self.do_attack(True)
 
 class Blinking(Effect):
-  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, char=' ', color=COLOR_WHITE):
-    super(Blinking, self).__init__(battleground, side, x, y, char, color)
+  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, character_name=' ', color=COLOR_WHITE):
+    super(Blinking, self).__init__(battleground, side, x, y, character_name, color)
     self.visible = True
 
   def dissapear(self):
@@ -88,15 +94,15 @@ class Blinking(Effect):
       self.next_action -= 1
 
 class Boulder(Effect):
-  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, char='O', color=COLOR_WHITE, power=10, delay=0, delta_power=-2):
-    super(Boulder, self).__init__(battleground, side, x, y, char, color)
+  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, character_name='O', color=COLOR_WHITE, power=10, delay=0, delta_power=-2):
+    super(Boulder, self).__init__(battleground, side, x, y, character_name, color)
     self.power = power
     self.delta_power = delta_power
     self.delay = delay
 
   def clone(self, x, y): 
     if self.bg.is_inside(x, y):
-      return self.__class__(self.bg, self.side, x, y, self.char, self.original_color, self.power, self.delay, self.delta_power)
+      return self.__class__(self.bg, self.side, x, y, self.character_name, self.original_color, self.power, self.delay, self.delta_power)
     return None
 
   def update(self):
@@ -106,7 +112,7 @@ class Boulder(Effect):
     if self.delay > 0:
       self.delay -= 1
       if self.delay == 0:
-        self.char = self.char.lower()
+        self.character_name = self.character_name.lower()
       return
     self.do_attack()
     self.power += self.delta_power
@@ -114,8 +120,8 @@ class Boulder(Effect):
       self.dissapear()
 
 class Bouncing(Effect):
-  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, char='o', color=COLOR_WHITE, power=5, path=[]):
-    super(Bouncing, self).__init__(battleground, side, x, y, char, color)
+  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, character_name='o', color=COLOR_WHITE, power=5, path=[]):
+    super(Bouncing, self).__init__(battleground, side, x, y, character_name, color)
     self.path = path
     self.power = power
     self.direction = 1
@@ -123,7 +129,7 @@ class Bouncing(Effect):
 
   def clone(self, x, y): 
     if self.bg.is_inside(x, y):
-      return self.__class__(self.bg, self.side, x, y, self.char, self.original_color, self.power, self.path)
+      return self.__class__(self.bg, self.side, x, y, self.character_name, self.original_color, self.power, self.path)
     return None
 
   def update(self):
@@ -141,37 +147,36 @@ class Bouncing(Effect):
     self.position += self.direction
 
 class EffectLoop(Effect):
-  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, chars=[' '], color=COLOR_WHITE, duration=1):
-    super(EffectLoop, self).__init__(battleground, side, x, y, chars[0], color)
-    self.chars = chars
+  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, character_names=[' '], color=COLOR_WHITE, duration=1):
+    super(EffectLoop, self).__init__(battleground, side, x, y, character_names[0], color)
+    self.character_names = character_names
     self.duration = duration
     self.index = 0
 
   def clone(self, x, y): 
     if self.bg.is_inside(x, y):
-      return self.__class__(self.bg, self.side, x, y, self.chars, self.original_color, self.duration)
+      return self.__class__(self.bg, self.side, x, y, self.character_names, self.original_color, self.duration)
     return None
 
   def update(self):
     if not self.alive: return
     self.duration -= 1
-    self.char = self.chars[self.index]
-    self.index = (self.index+1) % len(self.chars)
+    self.character_name = self.character_names[self.index]
+    self.index = (self.index+1) % len(self.character_names)
     if self.duration < 0:
       self.dissapear()
 
 class Explosion(Effect):
-  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, char='*', color=EFFECT_ATTACK_LIGHT, power=10):
-    super(Explosion, self).__init__(battleground, side, x, y, char, color)
+  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, character_name='*', color=EFFECT_ATTACK_LIGHT, power=10):
+    super(Explosion, self).__init__(battleground, side, x, y, character_name, color)
     self.power = power
 
   def clone(self, x, y): 
     if self.bg.is_inside(x, y):
-      return self.__class__(self.bg, self.side, x, y, self.char, self.original_color, self.power)
+      return self.__class__(self.bg, self.side, x, y, self.character_name, self.original_color, self.power)
     return None
 
   def update(self):
-    #TODO: generalize it to work with any starting color
     if not self.alive: return
     if self.color == EFFECT_ATTACK_LIGHT:
       self.color = EFFECT_ATTACK_MEDIUM
@@ -182,8 +187,8 @@ class Explosion(Effect):
       self.dissapear()
 
 class Lava(Effect):
-  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, char='L', color=EFFECT_DAMAGE, power=5, duration=10):
-    super(Lava, self).__init__(battleground, side, x, y, char, color)
+  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, character_name='L', color=EFFECT_DAMAGE, power=5, duration=10):
+    super(Lava, self).__init__(battleground, side, x, y, character_name, color)
     self.power = power
     self.original_duration = duration
     self.duration = duration
@@ -195,7 +200,7 @@ class Lava(Effect):
 
   def clone(self, x, y): 
     if self.bg.is_inside(x, y):
-      return self.__class__(self.bg, self.side, x, y, self.char, self.original_color, self.power, self.original_duration)
+      return self.__class__(self.bg, self.side, x, y, self.character_name, self.original_color, self.power, self.original_duration)
     return None
 
   def update(self):
@@ -213,24 +218,24 @@ class Lava(Effect):
     self.duration -= 1
 
 class Pathing(Effect):
-  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, char=' ', color=COLOR_WHITE):
-    super(Pathing, self).__init__(battleground, side, x, y, char, color)
+  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, character_name=' ', color=COLOR_WHITE):
+    super(Pathing, self).__init__(battleground, side, x, y, character_name, color)
 
   def update(self):
     if self.alive and not self.move_path():
       self.dissapear()
 
 class Orb(Pathing):
-  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, char='o', color=COLOR_WHITE,
+  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, character_name='o', color=COLOR_WHITE,
                power=15, attack_type="magical"):
-    super(Orb, self).__init__(battleground, side, x, y, char, color)
+    super(Orb, self).__init__(battleground, side, x, y, character_name, color)
     self.power = power
     self.attack_type = attack_type
     self.attacked_entities = []
 
   def clone(self, x, y): 
     if self.bg.is_inside(x, y):
-      return self.__class__(self.bg, self.side, x, y, self.char, self.original_color, self.power, self.attack_type)
+      return self.__class__(self.bg, self.side, x, y, self.character_name, self.original_color, self.power, self.attack_type)
 
   def update(self):
     super(Orb, self).update()
@@ -243,8 +248,8 @@ class Orb(Pathing):
             self.attacked_entities.append(entity)
 
 class Slash(Effect):
-  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, char='|', color=COLOR_WHITE, power=10, steps=8, goto=1, area=None):
-    super(Slash, self).__init__(battleground, side, x, y, char, color)
+  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, character_name='|', color=COLOR_WHITE, power=10, steps=8, goto=1, area=None):
+    super(Slash, self).__init__(battleground, side, x, y, character_name, color)
     self.general = self.bg.generals[side]
     self.max_steps = steps
     self.step = 0;
@@ -258,7 +263,7 @@ class Slash(Effect):
 
   def clone(self, x, y):
     if self.bg.is_inside(x, y):
-      return self.__class__(self.bg, self.side, self.general.x, self.general.y, self.char, self.original_color, self.power, self.max_steps, self.goto)
+      return self.__class__(self.bg, self.side, self.general.x, self.general.y, self.character_name, self.original_color, self.power, self.max_steps, self.goto)
     return None
 
   def update(self):
@@ -267,20 +272,20 @@ class Slash(Effect):
     if abs(self.step) >= self.max_steps:
       self.dissapear()
       return
-    self.char = self.chars[(self.step+self.direction)%4]
+    self.character_name = self.chars[(self.step+self.direction)%4]
     self.teleport(self.general.x, self.general.y)
     self.move(*self.directions[(self.step+self.direction)%8])
     self.step += int(copysign(1, self.goto))
     self.do_attack()
 
 class TempEffect(Effect):
-  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, char=' ', color=COLOR_WHITE, duration=1):
-    super(TempEffect, self).__init__(battleground, side, x, y, char, color)
+  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, character_name=' ', color=COLOR_WHITE, duration=1):
+    super(TempEffect, self).__init__(battleground, side, x, y, character_name, color)
     self.duration = duration
 
   def clone(self, x, y): 
     if self.bg.is_inside(x, y):
-      return self.__class__(self.bg, self.side, x, y, self.char, self.original_color, self.duration)
+      return self.__class__(self.bg, self.side, x, y, self.character_name, self.original_color, self.duration)
     return None
 
   def update(self):
@@ -290,21 +295,20 @@ class TempEffect(Effect):
       self.dissapear()
 
 class Thunder(Effect):
-  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, char='|', color=EFFECT_ATTACK_LIGHT, power=30, area=None):
+  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, character_name='|', color=EFFECT_ATTACK_LIGHT, power=30, area=None):
     self.target_y = y
     self.power = power
     self.area = area
     if x != -1:
       y = y-5 if y-5 >= 0 else 0
-    super(Thunder, self).__init__(battleground, side, x, y, char, color)
+    super(Thunder, self).__init__(battleground, side, x, y, character_name, color)
 
   def clone(self, x, y): 
     if self.bg.is_inside(x, y):
-      return self.__class__(self.bg, self.side, x, y, self.char, self.original_color, self.power, self.area)
+      return self.__class__(self.bg, self.side, x, y, self.character_name, self.original_color, self.power, self.area)
     return None
 
   def update(self):
-    #TODO: generalize it to work with any starting color
     if not self.alive: return
     if self.color == EFFECT_ATTACK_LIGHT:
       self.color = EFFECT_ATTACK_MEDIUM

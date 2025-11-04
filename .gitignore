@@ -1,6 +1,16 @@
+# Byte-compiled files
 *.pyc
+__pycache__/
+
+# C extensions
 *.so
-*.swp
+
+# Virtual environments
 env
 .venv/
+
+# Editor temporary files
+*.swp
+
+# Logs
 battle.log

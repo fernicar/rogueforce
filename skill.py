@@ -106,8 +106,8 @@ def copy_spell(general, tile):
     general.skills[general.copied_skill] = tile.entity.skills[tile.entity.last_skill_used].clone(general)
     if general.skills[general.copied_skill].name != old_skill:
       general.skills[general.copied_skill].cd = general.skills[general.copied_skill].max_cd
-  effect.TempEffect(general.bg, x=tile.x, y=tile.y, char=char, color=general.color)
-  effect.TempEffect(general.bg, x=general.x, y=general.y, char=char, color=general.color, duration=2)
+  effect.TempEffect(general.bg, x=tile.x, y=tile.y, character_name=char, color=general.color)
+  effect.TempEffect(general.bg, x=general.x, y=general.y, character_name=char, color=general.color, duration=2)
   return True
 
 def create_minions(general, l):
@@ -122,11 +122,11 @@ def create_minions(general, l):
 
 def darkness(general, tile, duration):
   if tile.passable:
-    d = TempEffect(general.bg, x=tile.x, y=tile.y, char=' ', duration=duration)
+    d = TempEffect(general.bg, x=tile.x, y=tile.y, character_name=' ', duration=duration)
   return tile.passable
 
 def decapitate(general, tile, threshold=1.0):
-  effect.EffectLoop(general.bg, x=tile.x, y=tile.y, chars=['-', '\\', 'v'], color=general.color, duration=3)
+  effect.EffectLoop(general.bg, x=tile.x, y=tile.y, character_names=['-', '\\', 'v'], color=general.color, duration=3)
   if tile.entity.hp/float(tile.entity.max_hp) > threshold:
     tile.entity.get_attacked(general, int(tile.entity.max_hp*threshold/2))
   else: # Decapitated
@@ -223,4 +223,3 @@ def water_pusher(general, tile):
         entity.get_pushed(i, j)
         did_anything = True
   return did_anything
-

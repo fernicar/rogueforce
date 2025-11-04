@@ -4,12 +4,13 @@ from entity import *
 from general import *
 from faction import *
 from window import *
+import pygame
 
-from config import COLOR_WHITE, STATUS_HEALTH_LOW, STATUS_HEALTH_MEDIUM, STATUS_PROGRESS_DARK, STATUS_PROGRESS_LIGHT, STATUS_SELECTED, UI_BACKGROUND
+from config import COLOR_WHITE, COLOR_BLACK, COLOR_BACKGROUND
 
 import re
 
-KEYMAP_GENERALS = "QWERTYUIOP"
+KEYMAP_GENERALS = [pygame.K_q, pygame.K_w, pygame.K_e, pygame.K_r, pygame.K_t, pygame.K_y, pygame.K_u, pygame.K_i, pygame.K_o, pygame.K_p]
 MOVEGEN_PATTERN = re.compile(r"move_gen(\d) \((-?\d+),(-?\d+)\)")
 
 class Scenario(Window):
@@ -32,8 +33,7 @@ class Scenario(Window):
     self.i += 1
     self.deploy_general(factions[1].generals[0])
     
-    # Initial render after all initialization is complete
-    self.render_all(0, 0)
+    self.render_all()
 
   def apply_requisition(self, general):
     if general.deployed: return
@@ -41,22 +41,26 @@ class Scenario(Window):
       if self.deploy_general(general):
         self.requisition[general.side] -= general.cost - general.requisition
         general.requisition = general.cost
-      else: #If can't be deployed, we give all but one requisition points
+      else:
         self.requisition[general.side] -= general.cost - general.requisition - 1
         general.requisition = general.cost - 1
     else:
       general.requisition += self.requisition[general.side]
       self.requisition[general.side] = 0
 
-  def check_input(self, keys, mouse, x, y):
+  def check_input(self):
+    keys = pygame.key.get_pressed()
+    x, y = pygame.mouse.get_pos()
+
     for i, key in enumerate(self.keymap_generals):
-        if keys[ord(key)]:
+        if keys[key]:
             g = self.factions[self.side].generals[i]
             if g.deployed:
                 self.selected_general = g
-                if not self.bg.is_inside(x, y):
+                grid_x, grid_y = self.get_grid_coords(x, y)
+                if not self.bg.is_inside(grid_x, grid_y):
                     return
-                return "move_gen{0} ({1},{2})\n".format(i, x, y)
+                return "move_gen{0} ({1},{2})\n".format(i, grid_x, grid_y)
             else:
                 self.selected_general = None
                 return "apply_req{0}\n".format(i)
@@ -116,33 +120,35 @@ class Scenario(Window):
             if (target in self.bg.fortresses and home in self.bg.fortresses and g in home.guests):
               for (f, tile) in home.connected_fortresses:
                 if f == target:
-                  # Send general g out from fortress home to fortress target thorugh tile
                   (g.x, g.y) = tile
                   g.home = (home.x, home.y)
                   g.target = (target.x, target.y)
                   home.unhost(g)
                   return
 
+  def render_panels(self):
+    self.render_side_panel(self.side, 0, 0)
+    self.render_side_panel((self.side + 1) % 2, 0, SCREEN_WIDTH - PANEL_WIDTH * 16)
+
   def render_side_panel(self, i, bar_length, bar_offset_x):
-    x_offset = i * (BG_WIDTH + PANEL_WIDTH) * 16
-    self.renderer.draw_text("Requisition", x_offset, 0)
+    x_offset = i * (BG_WIDTH + PANEL_WIDTH)
+    self.renderer.draw_text("Requisition", x_offset, PANEL_OFFSET_Y)
 
     line = 4
     for j in range(0, len(self.factions[i].generals)):
       g = self.factions[i].generals[j]
-      fg_color = g.color if g == self.selected_general else STATUS_SELECTED
-      self.renderer.draw_text(f"{KEYMAP_GENERALS[j]}: {g.name}", x_offset, line * 20, fg_color)
+      fg_color = g.color if g == self.selected_general else COLOR_WHITE
+      self.renderer.draw_text(f"{pygame.key.name(self.keymap_generals[j]).upper()}: {g.name}", x_offset, PANEL_OFFSET_Y + line * 15, fg_color)
       if not g.deployed:
-        self.renderer.draw_text(f"Cost: {g.cost}", x_offset, (line + 1) * 20)
+        self.renderer.draw_text(f"Cost: {g.cost}", x_offset, PANEL_OFFSET_Y + (line + 1) * 15)
       else:
-        self.renderer.draw_text(f"HP: {g.hp}/{g.max_hp}", x_offset, (line + 1) * 20)
-      line += 3
+        self.renderer.draw_text(f"HP: {g.hp}/{g.max_hp}", x_offset, PANEL_OFFSET_Y + (line + 1) * 15)
+      line += 2
 
   def start_battle(self, generals):
-    if generals[0].side != 0: # Left side must be the first
+    if generals[0].side != 0:
       (generals[0], generals[1]) = (generals[1], generals[0])
     return self.start_battle_thread(generals)
-    #thread.start_new_thread(self.start_battle_thread, (generals,))
 
   def start_battle_thread(self, generals):
     battleground = Battleground(BG_WIDTH, BG_HEIGHT)

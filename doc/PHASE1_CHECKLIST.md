@@ -8,7 +8,7 @@
 ## Structure Setup
 - [x] Run move2doc.py
 - [x] Verify directory structure
-- [ ] Update .gitignore
+- [x] Update .gitignore
 
 ## Core Systems
 - [x] Update config.py
@@ -20,23 +20,23 @@
 ## File-by-File Migration
 - [x] concepts.py (no TCOD, already done)
 - [x] config.py (completed above)
-- [ ] battleground.py
-- [ ] window.py
-- [ ] battle.py
-- [ ] entity.py
-- [ ] minion.py
-- [ ] general.py
-- [ ] effect.py
-- [ ] skill.py
-- [ ] status.py
-- [ ] tactic.py
-- [ ] formation.py
-- [ ] area.py
-- [ ] sieve.py
-- [ ] scenario.py
-- [ ] server.py (no TCOD)
-- [ ] faction.py (no TCOD)
-- [ ] factions/*.py
+- [x] battleground.py
+- [x] window.py
+- [x] battle.py
+- [x] entity.py
+- [x] minion.py
+- [x] general.py
+- [x] effect.py
+- [x] skill.py
+- [x] status.py
+- [x] tactic.py
+- [x] formation.py
+- [x] area.py
+- [x] sieve.py
+- [x] scenario.py
+- [x] server.py (no TCOD)
+- [x] faction.py (no TCOD)
+- [x] factions/*.py
 
 ## Testing
 - [x] Run test_migration_phase1.py

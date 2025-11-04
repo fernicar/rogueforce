@@ -1,17 +1,15 @@
 from area import SingleTarget
 from battleground import Battleground
-
 from rendering.renderer import Renderer
 from assets.asset_loader import asset_loader
 import pygame
-from config import COLOR_WHITE, UI_BACKGROUND, UI_HOVER_DEFAULT, UI_HOVER_INVALID, UI_HOVER_VALID
+from config import COLOR_WHITE, COLOR_BACKGROUND, COLOR_BLACK
 
 import socket
 import sys
 import textwrap
 import time
 
-# Import DEBUG from config module to avoid circular imports
 from config import DEBUG
 
 BG_WIDTH = 60
@@ -59,21 +57,19 @@ class Window(object):
 
     self.game_msgs = []
     self.game_over = False
-    self.area_hover_color = UI_HOVER_VALID
-    self.area_hover_color_invalid = UI_HOVER_INVALID
-    self.default_hover_color = UI_HOVER_DEFAULT
+    self.area_hover_color = COLOR_WHITE
+    self.area_hover_color_invalid = (255, 0, 0) # Red for invalid
+    self.default_hover_color = (200, 200, 200) # Light grey for default
     self.default_hover_function = SingleTarget(self.bg).get_all_tiles
     self.hover_function = None
 
     if DEBUG:
       sys.stdout.write("DEBUG: Window.__init__ completed\n")
-    
-    # Note: render_all() should be called by subclasses after their initialization is complete
 
   def ai_action(self, turn):
     return None
 
-  def check_input(self, key, mouse, x, y):
+  def check_input(self):
     return None
 
   def check_winner(self):
@@ -83,25 +79,32 @@ class Window(object):
     return False
 
   def do_hover(self, x, y):
+    grid_x, grid_y = self.get_grid_coords(x, y)
+
     if self.hover_function:
-      tiles = self.hover_function(x,y)
+      tiles = self.hover_function(grid_x, grid_y)
       if tiles is None:
-        self.bg.hover_tiles(self.default_hover_function(x,y), self.area_hover_color)
+        self.bg.hover_tiles(self.default_hover_function(grid_x, grid_y), self.area_hover_color)
       elif tiles:
         self.bg.hover_tiles(tiles, self.area_hover_color)
       else:
-        self.bg.hover_tiles(self.default_hover_function(x, y), self.area_hover_color_invalid)
+        self.bg.hover_tiles(self.default_hover_function(grid_x, grid_y), self.area_hover_color_invalid)
     else:
-      self.bg.hover_tiles(self.default_hover_function(x, y), self.default_hover_color)
+      self.bg.hover_tiles(self.default_hover_function(grid_x, grid_y), self.default_hover_color)
+
+  def get_grid_coords(self, mouse_x, mouse_y):
+      # This is a placeholder conversion. This will need to be updated
+      # when the camera and viewport are fully implemented.
+      tile_size = 16 # This should come from config
+      grid_x = (mouse_x - BG_OFFSET_X) // tile_size
+      grid_y = (mouse_y - BG_OFFSET_Y) // tile_size
+      return grid_x, grid_y
 
   def message(self, new_msg, color=COLOR_WHITE):
-    #split the message if necessary, among multiple lines
     new_msg_lines = textwrap.wrap(new_msg, MSG_WIDTH)
     for line in new_msg_lines:
-      #if the buffer is full, remove the first line to make room for the new one
       if len(self.game_msgs) == MSG_HEIGHT:
         del self.game_msgs[0]
-      #add the new line as a tuple, with the text and the color
       self.game_msgs.append((line, color))
 
   def loop(self):
@@ -119,7 +122,6 @@ class Window(object):
             received = str(turn) + "#" + ai
           else:
             received = "D"
-        # Ensure received is a string before splitting
         received_str = str(received) if received else ""
         split = received_str.split("#")
         if len(split) == 2:
@@ -131,10 +133,8 @@ class Window(object):
         elif event.type == pygame.KEYDOWN:
           if event.key == pygame.K_ESCAPE:
             self.game_over = True
-        # Add other event handling here
 
-      x, y = pygame.mouse.get_pos()
-      s = self.check_input(pygame.key.get_pressed(), pygame.mouse.get_pressed(), x, y)
+      s = self.check_input()
       if s is not None:
         self.messages[self.side][turn] = s
 
@@ -147,13 +147,15 @@ class Window(object):
       self.update_all()
       winner = self.check_winner()
       if (turn % 100) == 0: self.clean_all()
-      self.do_hover(x, y)
+
+      mouse_x, mouse_y = pygame.mouse.get_pos()
+      self.do_hover(mouse_x, mouse_y)
       turn +=1
       
       if DEBUG and (turn % 10 == 0):
         sys.stdout.write(f"DEBUG: Turn {turn} completed\n")
         
-      self.render_all(x, y)
+      self.render_all()
       self.renderer.update()
 
     if DEBUG:
@@ -163,29 +165,35 @@ class Window(object):
   def process_messages(self, turn):
     return False
 
-  def render_all(self, x, y):
+  def render_all(self):
     self.renderer.clear()
     self.renderer.draw_tile_grid()
     
     # Draw the battleground entities
     for tile in self.bg.tiles.values():
         if tile.entity:
-            # This will be replaced with sprite rendering later
-            self.renderer.draw_text(tile.entity.char, tile.x * 16, tile.y * 16, tile.entity.color)
+            # TODO: Replace this with sprite rendering once entities have animations
+            # sprite = tile.entity.animation.get_current_sprite()
+            # self.renderer.draw_sprite(sprite, tile.x, tile.y)
 
-    # You can add more rendering logic here for UI elements, etc.
+            # Temporary rendering using text
+            self.renderer.draw_text(tile.entity.character_name, tile.x * 16 + BG_OFFSET_X, tile.y * 16 + BG_OFFSET_Y, tile.entity.color)
+
     self.render_panels()
-    self.render_info(x,y)
+    self.render_info()
     self.render_msgs()
 
   def render_panels(self):
     pass
 
-  def render_info(self, x, y):
+  def render_info(self):
     pass
 
   def render_msgs(self):
-    pass
+    y = MSG_OFFSET_Y
+    for (line, color) in self.game_msgs:
+        self.renderer.draw_text(line, MSG_OFFSET_X, y, color)
+        y += 15 # Line height
 
   def update_all(self):
     for g in self.bg.generals:

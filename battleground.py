@@ -1,8 +1,6 @@
 import entity
-
-from config import UI_BACKGROUND, UI_HOVER_DEFAULT, UI_TEXT, UI_TILE_NEUTRAL
+from config import COLOR_BACKGROUND, COLOR_WHITE, COLOR_BLACK
 import sys
-
 import os
 
 class Battleground(object):
@@ -32,13 +30,13 @@ class Battleground(object):
       for y in range(self.height):
         if x in [0, self.width-1] or y in [0, self.height-1]: # Walls
           self.tiles[(x,y)] = Tile(x, y, "#", False)
-          self.tiles[(x,y)].color = UI_TEXT  # White walls for visibility
+          self.tiles[(x,y)].color = COLOR_WHITE
         else: # Floor
           self.tiles[(x,y)] = Tile(x, y)
-          self.tiles[(x,y)].char = '.'  # Keep dot but make it brighter
-          self.tiles[(x,y)].color = (200, 200, 200)  # Light grey for better visibility
+          self.tiles[(x,y)].char = '.'
+          self.tiles[(x,y)].color = (200, 200, 200)
 
-  def hover_tiles(self, l, color=UI_HOVER_DEFAULT):
+  def hover_tiles(self, l, color=COLOR_WHITE):
     self.unhover_tiles()
     for t in l:
       t.hover(color)
@@ -60,7 +58,7 @@ class Battleground(object):
         x += 1
     f.close()
     for f in forts:
-      self.fortresses.append(entity.Fortress(self, entity.NEUTRAL_SIDE, f[0], f[1], [self.tiles[f].char]*4, [UI_BACKGROUND]*4))
+      self.fortresses.append(entity.Fortress(self, entity.NEUTRAL_SIDE, f[0], f[1], [self.tiles[f].char]*4, [COLOR_BACKGROUND]*4))
 
   def unhover_tiles(self):
     for t in self.hovered:
@@ -70,9 +68,9 @@ class Tile(object):
   def __init__(self, x, y, char='.', passable=True):
     self.passable = passable
     self.char = char
-    self.color = UI_TILE_NEUTRAL
-    self.bg_original_color = UI_BACKGROUND
-    self.bg_color = UI_BACKGROUND
+    self.color = COLOR_BLACK
+    self.bg_original_color = COLOR_BACKGROUND
+    self.bg_color = COLOR_BACKGROUND
     self.entity = None
     self.effects = []
     self.x = x
@@ -84,7 +82,7 @@ class Tile(object):
   def is_passable(self, passenger):
     return self.passable and (self.entity == None or self.entity.is_ally(passenger))
 
-  def hover(self, color=UI_HOVER_DEFAULT):
+  def hover(self, color=COLOR_WHITE):
     self.bg_color = color
 
   def unhover(self):

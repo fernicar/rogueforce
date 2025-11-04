@@ -1,6 +1,5 @@
 from entity import Entity
 from entity import BigEntity
-from compat.tcod_shim import Color
 from config import COLOR_WHITE
 
 import effect
@@ -9,8 +8,8 @@ import tactic
 from collections import defaultdict
 
 class Minion(Entity):
-  def __init__(self, battleground, side, x=-1, y=-1, name="minion", char='m', color=COLOR_WHITE):
-    super(Minion, self).__init__(battleground, side, x, y, char, color)
+  def __init__(self, battleground, side, x=-1, y=-1, name="minion", character_name=None, color=COLOR_WHITE):
+    super(Minion, self).__init__(battleground, side, x, y, name, character_name, color)
     self.name = name
     self.max_hp = 30
     self.hp = 30
@@ -24,7 +23,7 @@ class Minion(Entity):
 
   def clone(self, x, y):
     if self.bg.is_inside(x, y) and self.bg.tiles[(x, y)].entity is None and self.bg.tiles[(x, y)].is_passable(self):
-      return self.__class__(self.bg, self.side, x, y, self.name, self.char, self.original_color)
+      return self.__class__(self.bg, self.side, x, y, self.name, self.character_name, self.original_color)
     return None
 
   def die(self):
@@ -33,7 +32,6 @@ class Minion(Entity):
       self.bg.generals[self.side].minions_alive -= 1
 
   def enemy_reachable(self, diagonals=False):
-    # Order: forward, backward, up, down, then diagonals
     order = [(1, 0), (-1, 0), (0, -1), (0, 1)]
     if diagonals:
       order.extend([(1, -1), (1, 1), (-1, -1), (-1, 1)])
@@ -76,8 +74,7 @@ class Minion(Entity):
     
   def update(self):
     if not self.alive: return
-    for s in self.statuses:
-      s.update()
+    super(Minion, self).update()
     if self.next_action <= 0:
       self.reset_action()
       if not self.try_attack():
@@ -85,16 +82,13 @@ class Minion(Entity):
     else: self.next_action -= 1
 
   def update_color(self):
-    # We change the color to indicate that the minion is wounded
-    # More red -> closer to death (health-based dynamic coloring)
     c = int(255*(float(self.hp)/self.max_hp))
-    self.color = Color(255, c, c)
-    # Note: Dynamic health-based coloring - kept as libtcod.Color for functionality
+    self.color = (255, c, c)
 
 class BigMinion(BigEntity, Minion):
   def __init__(self, battleground, side, x=-1, y=-1, name="Giant", chars=['G']*4, colors=[COLOR_WHITE]*4):
     BigEntity.__init__(self, battleground, side, x, y, chars, colors)
-    Minion.__init__(self, battleground, side, x, y, name, colors[0])
+    Minion.__init__(self, battleground, side, x, y, name, name, colors[0])
     self.max_hp *= self.length
     self.hp = self.max_hp
     
@@ -102,12 +96,11 @@ class BigMinion(BigEntity, Minion):
     for (pos_x, pos_y) in [(x+i, y+j) for i in range (0, self.length) for j in range (0, self.length)]:
       if not self.bg.is_inside(pos_x, pos_y) or self.bg.tiles[(pos_x, pos_y)].entity is not None or not self.bg.tiles[(x, y)].is_passable(self):
         return None
-    entity = self.__class__(self.bg, self.side, x, y, self.name, self.color)
+    entity = self.__class__(self.bg, self.side, x, y, self.name, self.sprite_names, self.colors)
     entity.update_body()
     return entity
 
   def enemy_reachable(self):
-    # Order: forward, backward, up, down
     for (dx, dy) in [(1 if self.side == 0 else -1, 0), (1 if self.side == 0 else -1, 0), (0, 1), (0, -1)]:
       for (x,y) in [(self.x+dx+x,self.y+dy+y) for x in range (0, self.length) for y in range (0, self.length)]:
         enemy = self.bg.tiles[(x, y)].entity
@@ -116,8 +109,8 @@ class BigMinion(BigEntity, Minion):
     return None
 
 class RangedMinion(Minion):
-  def __init__(self, battleground, side, x=-1, y=-1, name="archer", color=COLOR_WHITE, attack_effects = ['>', '<']):
-    super(RangedMinion, self).__init__(battleground, side, x, y, name)
+  def __init__(self, battleground, side, x=-1, y=-1, name="archer", character_name=None, color=COLOR_WHITE, attack_effects = ['>', '<']):
+    super(RangedMinion, self).__init__(battleground, side, x, y, name, character_name, color)
     self.max_hp = 10
     self.hp = 10
     self.power = 1
@@ -127,8 +120,9 @@ class RangedMinion(Minion):
     self.reset_action()
 
   def clone(self, x, y):
-    if super(RangedMinion, self).clone(x, y) == None: return None
-    return self.__class__(self.bg, self.side, x, y, self.name, self.original_color, self.attack_effects)
+    if self.bg.is_inside(x, y) and self.bg.tiles[(x, y)].entity is None and self.bg.tiles[(x, y)].is_passable(self):
+      return self.__class__(self.bg, self.side, x, y, self.name, self.character_name, self.original_color, self.attack_effects)
+    return None
 
   def follow_tactic(self):
     if self.tactic is None: return

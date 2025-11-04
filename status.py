@@ -4,8 +4,8 @@ import effect
 import skill
 import tactic
 
-from config import COLOR_WHITE, UI_BACKGROUND
-
+from config import COLOR_WHITE, COLOR_BACKGROUND
+import pygame
 import random
 
 class Status(object):
@@ -155,7 +155,7 @@ class Jumping(Status):
     self.rand.seed(duration)
     self.already_hit = []
     if entity:
-      self.attack_effect = effect.TempEffect(entity.bg, char='-', color=owner.color if owner else COLOR_WHITE)
+      self.attack_effect = effect.TempEffect(entity.bg, character_name='-', color=owner.color if owner else COLOR_WHITE)
 
   def clone(self, entity):
     return self.__class__(entity, self.owner, self.duration, self.name,
@@ -184,7 +184,7 @@ class Lifted(Status):
     self.land_status = land_status
     self.skill = skill.Skill(owner, skill.apply_status, 0, [land_status], area=land_area)
     if entity:
-      effect.TempEffect(entity.bg, x=entity.x, y=entity.y, char='^', color=owner.color if owner else COLOR_WHITE, duration=duration)
+      effect.TempEffect(entity.bg, x=entity.x, y=entity.y, character_name='^', color=owner.color if owner else COLOR_WHITE, duration=duration)
 
   def clone(self, entity):
     return self.__class__(entity, self.owner, self.duration, self.name, self.land_area, self.land_status)
@@ -218,9 +218,9 @@ class Linked(Status):
     super(Linked, self).end()
     self.duration = -1
     if self.entity and self.entity.bg and self.tiles:
-      self.entity.bg.tiles[(self.entity.x, self.entity.y)].bg_color = UI_BACKGROUND
+      self.entity.bg.tiles[(self.entity.x, self.entity.y)].bg_color = COLOR_BACKGROUND
       for t in self.tiles:
-        t.bg_color = UI_BACKGROUND
+        t.bg_color = COLOR_BACKGROUND
     
   def update(self):
     super(Linked, self).update()
@@ -233,13 +233,10 @@ class Linked(Status):
         self.entity.get_attacked(self)
         self.end()
       else:
-        t.bg_color = color_lerp(UI_BACKGROUND, self.owner.original_color, 0.4)
-        # Note: Dynamic color interpolation - appropriate use of libtcod.color_lerp for status effects
+        t.bg_color = pygame.Color(UI_BACKGROUND).lerp(self.owner.original_color, 0.4)
 
 class Poison(Status):
-  # tbt = time between ticks
   def __init__(self, entity=None, owner=None, power=0, tbt=0, ticks=9999, name="Poison"):
-    # Duration is not exact, it lasts a few more updates, but that shouldn't be a problem.
     super(Poison, self).__init__(entity, owner, ticks*(tbt+1), name)
     self.tbt = tbt
     self.ticks = ticks
@@ -305,8 +302,7 @@ class Recalling(Status):
     if self.duration > 0 and self.entity and self.entity.bg and self.color:
       self.entity.next_action = 100
       tile = self.entity.bg.tiles[(self.entity.x, self.entity.y)]
-      self.entity.color = color_lerp(tile.bg_color, self.color, 1-(self.duration/10.0))
-      # Note: Dynamic color interpolation for status effects - appropriate use of libtcod
+      self.entity.color = pygame.Color(tile.bg_color).lerp(self.color, 1-(self.duration/10.0))
 
   def end(self):
     super(Recalling, self).end()
@@ -338,7 +334,7 @@ class Stunned(Status):
   def __init__(self, entity=None, owner=None, duration=9999, name="Stunned"):
     super(Stunned, self).__init__(entity, owner, duration, name)
     if entity:
-      self.effect = effect.Blinking(entity.bg, x=entity.x, y=entity.y, char='~', color=entity.color)
+      self.effect = effect.Blinking(entity.bg, x=entity.x, y=entity.y, character_name='~', color=entity.color)
 
   def end(self):
     super(Stunned, self).end()
@@ -396,8 +392,7 @@ class Vanishing(Status):
       self.entity.next_action = 100
       tile = self.entity.bg.tiles[(self.entity.x, self.entity.y)]
       if self.entity.color and tile.bg_color:
-        self.entity.color = color_lerp(self.entity.color, tile.bg_color, 1-(self.duration/10.0))
-      # Note: Dynamic color interpolation for status effects - appropriate use of libtcod
+        self.entity.color = pygame.Color(self.entity.color).lerp(tile.bg_color, 1-(self.duration/10.0))
 
   def end(self):
     super(Vanishing, self).end()
