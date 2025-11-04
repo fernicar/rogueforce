@@ -172,12 +172,12 @@ class Window(object):
     # Draw the battleground entities
     for tile in self.bg.tiles.values():
         if tile.entity:
-            # TODO: Replace this with sprite rendering once entities have animations
-            # sprite = tile.entity.animation.get_current_sprite()
-            # self.renderer.draw_sprite(sprite, tile.x, tile.y)
-
-            # Temporary rendering using text
-            self.renderer.draw_text(tile.entity.character_name, tile.x * 16 + BG_OFFSET_X, tile.y * 16 + BG_OFFSET_Y, tile.entity.color)
+            if tile.entity.animation:
+                sprite = tile.entity.animation.get_current_sprite()
+                self.renderer.draw_sprite(sprite, tile.x, tile.y)
+            else:
+                # Fallback to text rendering if no animation is available
+                self.renderer.draw_text(tile.entity.character_name, tile.x * 16 + BG_OFFSET_X, tile.y * 16 + BG_OFFSET_Y, tile.entity.color)
 
     self.render_panels()
     self.render_info()

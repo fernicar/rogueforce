@@ -156,8 +156,11 @@ class AssetLoader:
             'flinch_1', 'flinch_2'
         ]
 
+        if not character_name or not character_name.isalnum():
+            return {sprite_name: None for sprite_name in sprite_names}
+
         for sprite_name in sprite_names:
-            path = f"{character_name}/{sprite_name}.png"
+            path = f"game/{character_name}/{sprite_name}.png"
             sprites[sprite_name] = self.load_sprite(path)
 
         return sprites

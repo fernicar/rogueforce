@@ -3,18 +3,17 @@ from battleground import Battleground
 from general import *
 from window import *
 
-from config import COLOR_WHITE, COLOR_BLACK, COLOR_BACKGROUND
+from config import COLOR_WHITE, STATUS_HEALTH_LOW, STATUS_HEALTH_MEDIUM, STATUS_PROGRESS_DARK, STATUS_PROGRESS_LIGHT, STATUS_SELECTED, UI_BACKGROUND
 
 import copy
 import re
 import sys
-import pygame
 
 from config import DEBUG
 
-KEYMAP_SKILLS = [pygame.K_q, pygame.K_w, pygame.K_e, pygame.K_r, pygame.K_t, pygame.K_y, pygame.K_u, pygame.K_i, pygame.K_o, pygame.K_p]
-KEYMAP_SWAP = [pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4, pygame.K_5, pygame.K_6, pygame.K_7, pygame.K_8, pygame.K_9]
-KEYMAP_TACTICS = [pygame.K_z, pygame.K_x, pygame.K_c, pygame.K_v, pygame.K_b, pygame.K_n, pygame.K_m]
+KEYMAP_SKILLS = "QWERTYUIOP"
+KEYMAP_SWAP = "123456789"
+KEYMAP_TACTICS = "ZXCVBNM"
 
 FLAG_PATTERN = re.compile(r"flag \((-?\d+),(-?\d+)\)")
 SKILL_PATTERN = re.compile(r"skill(\d) \((-?\d+),(-?\d+)\)")
@@ -34,6 +33,9 @@ class BattleWindow(Window):
     self.keymap_swap = KEYMAP_SWAP[0:len(battleground.reserves[side])]
     self.keymap_tactics = KEYMAP_TACTICS[0:len(battleground.generals[side].tactics)]
     
+    if DEBUG:
+      sys.stdout.write("DEBUG: About to call super(BattleWindow, self).__init__\n")
+
     super(BattleWindow, self).__init__(battleground, side, host, port, window_id)
     
     if DEBUG:
@@ -43,23 +45,19 @@ class BattleWindow(Window):
     ai_side = (self.side+1)%2
     return self.bg.generals[ai_side].ai_action(turn)
 
-  def check_input(self):
-      keys = pygame.key.get_pressed()
-      mouse = pygame.mouse.get_pressed()
-      x, y = pygame.mouse.get_pos()
-
+  def check_input(self, keys, mouse, x, y):
       if keys[pygame.K_s]:
           return "stop\n"
       if mouse[2]:  # Right mouse button
           return "flag ({0},{1})\n".format(x, y)
 
       for i, key in enumerate(self.keymap_swap):
-          if keys[key]:
+          if keys[ord(key)]:
               return "swap{0}\n".format(i)
 
       for i, key in enumerate(self.keymap_skills):
-          if keys[key]:
-              if keys[pygame.K_LSHIFT] or keys[pygame.K_RSHIFT]:
+          if keys[ord(key)]:
+              if pygame.key.get_mods() & pygame.KMOD_SHIFT:
                   self.hover_function = self.bg.generals[self.side].skills[i].get_area_tiles
               else:
                   self.hover_function = None
@@ -74,7 +72,7 @@ class BattleWindow(Window):
           return "tactic{0}\n".format(n)
 
       for i, key in enumerate(self.keymap_tactics):
-          if keys[key]:
+          if keys[ord(key)]:
               if self.bg.generals[self.side].tactics.index(self.bg.generals[self.side].selected_tactic) != 0:
                   self.bg.generals[self.side].previous_tactic = self.bg.generals[self.side].selected_tactic
               return "tactic{0}\n".format(i)
@@ -82,6 +80,7 @@ class BattleWindow(Window):
       return None
 
   def check_winner(self):
+    #TODO: detect draws
     for i in [0,1]:
       if not self.bg.generals[i].alive:
         self.message(self.bg.generals[i].name + ": " + self.bg.generals[i].death_quote, self.bg.generals[i].original_color)
@@ -110,7 +109,7 @@ class BattleWindow(Window):
           self.bg.generals[i].command_tactic(int(m[6]))
         elif m.startswith("swap"):
           if self.bg.generals[i].swap(int(m[4])):
-            pass # Re-rendering the side panel will be handled in the main loop
+            self.render_side_panel_clear(i)
         else:
           match = FLAG_PATTERN.match(m)
           if match:
@@ -122,58 +121,56 @@ class BattleWindow(Window):
                 self.message(self.bg.generals[i].name + ": " + self.bg.generals[i].skills[int(match.group(1))].quote,
                              self.bg.generals[i].color)
 
-  def render_info(self):
-    x, y = pygame.mouse.get_pos()
-    grid_x, grid_y = self.get_grid_coords(x, y)
+  def render_msgs(self):
+    y = 0
+    for (line, color) in self.game_msgs:
+      self.renderer.draw_text(line, 0, y * 20, color)
+      y += 1
 
-    if self.bg.is_inside(grid_x, grid_y):
-      entity = self.bg.tiles[(grid_x, grid_y)].entity
+  def render_info(self, x, y):
+    if self.bg.is_inside(x, y):
+      entity = self.bg.tiles[(x, y)].entity
       if entity:
         if(hasattr(entity, 'hp')):
           text = entity.name.capitalize() + ": HP %02d/%02d, PW %d" % (entity.hp, entity.max_hp, entity.power)
-          self.renderer.draw_text(text, INFO_OFFSET_X, INFO_OFFSET_Y, entity.original_color)
+          self.renderer.draw_text(text, 0, SCREEN_HEIGHT - 20, entity.original_color)
         else:
-          self.renderer.draw_text(entity.name.capitalize(), INFO_OFFSET_X, INFO_OFFSET_Y)
-
-  def render_panels(self):
-      self.render_side_panel(self.side, 0, 0)
-      self.render_side_panel((self.side + 1) % 2, 0, SCREEN_WIDTH - PANEL_WIDTH * 16)
+          self.renderer.draw_text(entity.name.capitalize(), 0, SCREEN_HEIGHT - 20)
 
   def render_side_panel(self, i, bar_length, bar_offset_x):
     g = self.bg.generals[i]
     
-    x_offset = i * (BG_WIDTH + PANEL_WIDTH)
-    self.renderer.draw_text(g.name, x_offset, PANEL_OFFSET_Y)
+    x_offset = i * (BG_WIDTH + PANEL_WIDTH) * 16
+    self.renderer.draw_text(g.name, x_offset, 0)
 
     line = 3
     for j in range(0, len(g.skills)):
       skill = g.skills[j]
-      text = f"{pygame.key.name(self.keymap_skills[j]).upper()}: {skill.name}"
-      self.renderer.draw_text(text, x_offset, PANEL_OFFSET_Y + line * 15)
-      line += 1
+      text = f"{KEYMAP_SKILLS[j]}: {skill.name}"
+      self.renderer.draw_text(text, x_offset, line * 20)
+      line += 2
 
     text = f"{g.minions_alive} {g.minion.name}s"
-    self.renderer.draw_text(text, x_offset, PANEL_OFFSET_Y + line * 15)
-    line += 1
+    self.renderer.draw_text(text, x_offset, line * 20)
 
     line = self.render_tactics(i, x_offset, line) + 1
 
     swap_ready = g.swap_cd >= g.swap_max_cd
-    for r_idx, r in enumerate(self.bg.reserves[i]):
+    for r in self.bg.reserves[i]:
       if swap_ready:
-        text = f"{pygame.key.name(self.keymap_swap[r_idx])}: {r.name}: HP {r.hp}/{r.max_hp}"
-        self.renderer.draw_text(text, x_offset, PANEL_OFFSET_Y + line * 15)
+        text = f"{r.name}: HP {r.hp}/{r.max_hp}"
+        self.renderer.draw_text(text, x_offset, line * 20)
       else:
         text = f"Swap CD: {g.swap_cd}/{g.swap_max_cd}"
-        self.renderer.draw_text(text, x_offset, PANEL_OFFSET_Y + line * 15)
-      line += 1
+        self.renderer.draw_text(text, x_offset, line * 20)
+      line += 2
 
   def render_tactics(self, i, x_offset, line):
     for s in range(0, len(self.bg.generals[i].tactics)):
-      text = f"{pygame.key.name(self.keymap_tactics[s]).upper()}: {self.bg.generals[i].tactic_quotes[s]}"
-      color = (255, 0, 0) if self.bg.generals[i].tactics[s] == self.bg.generals[i].selected_tactic else COLOR_WHITE
-      self.renderer.draw_text(text, x_offset, PANEL_OFFSET_Y + line * 15, color)
-      line += 1
+      text = f"{KEYMAP_TACTICS[s]}: {self.bg.generals[i].tactic_quotes[s]}"
+      color = STATUS_HEALTH_LOW if self.bg.generals[i].tactics[s] == self.bg.generals[i].selected_tactic else STATUS_SELECTED
+      self.renderer.draw_text(text, x_offset, line * 20, color)
+      line += 2
     return line
 
 from factions import doto
@@ -183,16 +180,25 @@ if __name__=="__main__":
     sys.stdout.write(f"DEBUG: Command line args: {sys.argv}\n")
     
   bg = Battleground(BG_WIDTH, BG_HEIGHT)
+  if DEBUG:
+    sys.stdout.write("DEBUG: Battleground created\n")
 
   bg.generals = [doto.Pock(bg, 0, 3, 21), doto.Pock(bg, 1, 56, 21)]
+  if DEBUG:
+    sys.stdout.write("DEBUG: Generals created\n")
 
   for i in [0,1]:
     bg.reserves[i] = [doto.Rubock(bg, i), doto.Bloodrotter(bg, i), doto.Ox(bg, i)]
+  if DEBUG:
+    sys.stdout.write("DEBUG: Reserves created\n")
     
   for i in [0,1]:
     bg.generals[i].start_scenario()
     for g in bg.reserves[i]:
       g.start_scenario()
+
+  if DEBUG:
+    sys.stdout.write("DEBUG: Scenarios started\n")
 
   if len(sys.argv) == 4: 
     battle = BattleWindow(bg, int(sys.argv[1]), sys.argv[2], int(sys.argv[3]))
@@ -201,4 +207,10 @@ if __name__=="__main__":
   else:
     battle = BattleWindow(bg, 0)
     
+  if DEBUG:
+    sys.stdout.write("DEBUG: BattleWindow created, about to start loop\n")
+
   battle.loop()
+
+  if DEBUG:
+    sys.stdout.write("DEBUG: Loop ended\n")

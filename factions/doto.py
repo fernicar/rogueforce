@@ -5,12 +5,17 @@ from sieve import *
 from skill import *
 from status import *
 
-import concepts
+from config import COLOR_WHITE
 
 import random
 
+FACTION_DOTO_DARK = (128, 0, 0)
+FACTION_DOTO_MEDIUM = (0, 128, 0)
+FACTION_DOTO_LIGHT = (0, 0, 128)
+FACTION_DOTO_PURE = (128, 128, 128)
+
 class Bloodrotter(General):
-  def __init__(self, battleground, side, x=-1, y=-1, name="Bloodrotter", color=concepts.FACTION_DOTO_DARK):
+  def __init__(self, battleground, side, x=-1, y=-1, name="Bloodrotter", color=FACTION_DOTO_DARK):
     super(Bloodrotter, self).__init__(battleground, side, x, y, name, color)
     self.max_hp = 250
     self.power = 11
@@ -28,14 +33,13 @@ class Bloodrotter(General):
                       SingleTarget(self.bg, is_unit, self, is_inrange_close)))
     self.skills.append(DummySkill("Blood Bath", "Gain health for every unit killed"))
     self.skills.append(DummySkill("Thirst", "Gets damage and speed based on enemy's missing health"))
-    self.skills.append(Skill(self, nuke_statuses, 140, [40, TempEffect(self.bg, char='*', color=self.color),
+    self.skills.append(Skill(self, nuke_statuses, 140, [40, TempEffect(self.bg, character_name='*', color=self.color),
                        "magical", [Bleeding(owner=self, power=30, duration=40, name="Rupture")]],
                        "Rupture", "Deals initial damage plus extra damage if the unit moves",
                        SingleTarget(self.bg, is_enemy, self, is_inrange_close)))
 
   def register_kill(self, killed):
     super(Bloodrotter, self).register_kill(killed)
-    # Blood Bath
     self.get_healed(int(killed.max_hp * 0.25))
 
   def thirst(self, enemy):
@@ -51,7 +55,7 @@ class Bloodrotter(General):
     super(Bloodrotter, self).update()
 
 class Ox(General):
-  def __init__(self, battleground, side, x=-1, y=-1, name="Ox", color=concepts.FACTION_DOTO_MEDIUM):
+  def __init__(self, battleground, side, x=-1, y=-1, name="Ox", color=FACTION_DOTO_MEDIUM):
     super(Ox, self).__init__(battleground, side, x, y, name, color)
     self.rand = random.Random()
     self.max_hp = 400
@@ -84,23 +88,22 @@ class Ox(General):
 
   def use_skill(self, i, x, y):
     if i == self.helix_index:
-      # Counter helix can't be used like that
       return False
     else:
       last = self.last_skill_used
       if i == -1:
-        i = self.helix_index # Forced counter helix
+        i = self.helix_index
       skill_used = super(Ox, self).use_skill(i, x, y)
       if skill_used and i == self.helix_index:
         self.last_skill_used = last
       return skill_used
 
 class Pock(General):
-  def __init__(self, battleground, side, x=-1, y=-1, name="Pock", color=concepts.FACTION_DOTO_LIGHT):
+  def __init__(self, battleground, side, x=-1, y=-1, name="Pock", color=FACTION_DOTO_LIGHT):
     super(Pock, self).__init__(battleground, side, x, y, name, color)
     self.max_hp = 250
     self.armor["physical"] = 1
-    self.orb = Orb(self.bg, self.side, char='o', color=self.color)
+    self.orb = Orb(self.bg, self.side, character_name='o', color=self.color)
     self.orb_index = 0
     self.jaunt_index = 4
 
@@ -109,7 +112,7 @@ class Pock(General):
     self.skills.append(Skill(self, place_entity, 80, [self.orb], "Illusory Orb",
                        "Launches a magic orb that damages and might be teleported into",
                        SingleTarget(self.bg, general=self, reach_function=is_inrange_long, selfcentered=True)))
-    self.skills.append(Skill(self, nuke_statuses, 60, [15, TempEffect(self.bg, char='`', color=self.color),
+    self.skills.append(Skill(self, nuke_statuses, 60, [15, TempEffect(self.bg, character_name='`', color=self.color),
                        "magical", [FreezeCooldowns(None, self, 20, "Waning Rift silence")]],
                        "Waning Rift", "Deals damage and silences enemy units nearby",
                        Circle(self.bg, is_enemy, self, selfcentered=True, radius=2)))
@@ -138,7 +141,7 @@ class Pock(General):
     return skill_used
 
 class Rubock(General):
-  def __init__(self, battleground, side, x=-1, y=-1, name="Rubock", color=concepts.FACTION_DOTO_PURE):
+  def __init__(self, battleground, side, x=-1, y=-1, name="Rubock", color=FACTION_DOTO_PURE):
     super(Rubock, self).__init__(battleground, side, x, y, name, color)
     self.copied_skill = 2
     self.armor["physical"] = 1

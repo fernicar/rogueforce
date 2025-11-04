@@ -40,20 +40,20 @@
 
 ## Testing
 - [x] Run test_migration_phase1.py
-- [ ] Manual smoke test
-- [ ] Verify DEBUG mode works
-- [ ] Test asset loading failures
-- [ ] Test placeholder rendering
+- [x] Manual smoke test
+- [x] Verify DEBUG mode works
+- [x] Test asset loading failures
+- [x] Test placeholder rendering
 
 ## Cleanup
 - [x] Remove arial10x10.png (TCOD font)
-- [ ] Remove compat/tcod_shim.py
-- [ ] Update all imports
+- [x] Remove compat/tcod_shim.py
+- [x] Update all imports
 - [x] Remove TCOD from requirements.txt
-- [ ] Run final tests
+- [x] Run final tests
 
 ## Documentation
-- [ ] Update README.md
-- [ ] Document new rendering system
-- [ ] Document asset loading system
-- [ ] Create migration notes
+- [x] Update README.md
+- [x] Document new rendering system
+- [x] Document asset loading system
+- [x] Create migration notes

@@ -16,7 +16,7 @@ class Minion(Entity):
     self.armor = defaultdict(lambda: 0)
     self.power = 5
     self.tactic = tactic.null
-    self.attack_effect = effect.TempEffect(self.bg, char='/' if side else '\\')
+    self.attack_effect = effect.TempEffect(self.bg, character_name='/' if side else '\\')
 
   def can_be_attacked(self):
     return True
