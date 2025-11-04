@@ -7,20 +7,19 @@ from sieve import *
 from skill import *
 from status import *
 
-import concepts
-import libtcodpy as libtcod
+from config import COLOR_WHITE
 
 import random
 
 class Slave(Minion):
-  def __init__(self, battleground, side, x=-1, y=-1, name="slave", char='s', color=concepts.ENTITY_DEFAULT):
+  def __init__(self, battleground, side, x=-1, y=-1, name="slave", char='s', color=COLOR_WHITE):
     super(Slave, self).__init__(battleground, side, x, y, name, char, color)
     self.max_hp = 10
     self.hp = 10
     self.power = 3
 
 class Gemekaa(General):
-  def __init__(self, battleground, side, x=-1, y=-1, name="Gemekaa", color=concepts.FACTION_ORACLE):
+  def __init__(self, battleground, side, x=-1, y=-1, name="Gemekaa", color=COLOR_WHITE):
     super(Gemekaa, self).__init__(battleground, side, x, y, name, color)
     self.max_hp = 70
     self.death_quote = "I did not foresee this..."

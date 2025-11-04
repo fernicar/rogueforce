@@ -1,7 +1,6 @@
 import entity
 
-import concepts
-import libtcodpy as libtcod
+from config import UI_BACKGROUND, UI_HOVER_DEFAULT, UI_TEXT, UI_TILE_NEUTRAL
 import sys
 
 import os
@@ -33,26 +32,13 @@ class Battleground(object):
       for y in range(self.height):
         if x in [0, self.width-1] or y in [0, self.height-1]: # Walls
           self.tiles[(x,y)] = Tile(x, y, "#", False)
-          self.tiles[(x,y)].color = concepts.UI_TEXT  # White walls for visibility
+          self.tiles[(x,y)].color = UI_TEXT  # White walls for visibility
         else: # Floor
           self.tiles[(x,y)] = Tile(x, y)
           self.tiles[(x,y)].char = '.'  # Keep dot but make it brighter
           self.tiles[(x,y)].color = (200, 200, 200)  # Light grey for better visibility
 
-  def draw(self, con):
-    from config import DEBUG
-    tile_count = 0
-    for pos in self.tiles:
-      tile = self.tiles[pos]
-      if DEBUG:
-        if tile_count < 5:  # Only debug first few tiles to avoid spam
-          sys.stdout.write(f"DEBUG: Drawing tile at ({tile.x},{tile.y}) char='{tile.char}' color={tile.color}\n")
-      tile.draw(con)
-      tile_count += 1
-    if DEBUG:
-      sys.stdout.write(f"DEBUG: Total tiles drawn: {tile_count}\n")
-
-  def hover_tiles(self, l, color=concepts.UI_HOVER_DEFAULT):
+  def hover_tiles(self, l, color=UI_HOVER_DEFAULT):
     self.unhover_tiles()
     for t in l:
       t.hover(color)
@@ -74,7 +60,7 @@ class Battleground(object):
         x += 1
     f.close()
     for f in forts:
-      self.fortresses.append(entity.Fortress(self, entity.NEUTRAL_SIDE, f[0], f[1], [self.tiles[f].char]*4, [concepts.ENTITY_DEFAULT]*4))
+      self.fortresses.append(entity.Fortress(self, entity.NEUTRAL_SIDE, f[0], f[1], [self.tiles[f].char]*4, [UI_BACKGROUND]*4))
 
   def unhover_tiles(self):
     for t in self.hovered:
@@ -84,9 +70,9 @@ class Tile(object):
   def __init__(self, x, y, char='.', passable=True):
     self.passable = passable
     self.char = char
-    self.color = concepts.UI_TILE_NEUTRAL
-    self.bg_original_color = concepts.UI_BACKGROUND
-    self.bg_color = concepts.UI_BACKGROUND
+    self.color = UI_TILE_NEUTRAL
+    self.bg_original_color = UI_BACKGROUND
+    self.bg_color = UI_BACKGROUND
     self.entity = None
     self.effects = []
     self.x = x
@@ -98,16 +84,7 @@ class Tile(object):
   def is_passable(self, passenger):
     return self.passable and (self.entity == None or self.entity.is_ally(passenger))
 
-  def draw(self, con):
-    if len(self.effects) > 0 and self.effects[-1].char:
-      drawable = self.effects[-1]
-    elif self.entity:
-      drawable = self.entity
-    else:
-      drawable = self
-    libtcod.console_put_char_ex(con, self.x, self.y, drawable.get_char(drawable.x-self.x,drawable.y-self.y), drawable.color, self.bg_color)
-  
-  def hover(self, color=concepts.UI_HOVER_DEFAULT):
+  def hover(self, color=UI_HOVER_DEFAULT):
     self.bg_color = color
 
   def unhover(self):

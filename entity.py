@@ -1,17 +1,16 @@
-import concepts
-import libtcodpy as libtcod
+from config import COLOR_WHITE
 import cmath as math
 
 NEUTRAL_SIDE = 555
 
 class Entity(object):
-  def __init__(self, battleground, side=NEUTRAL_SIDE, x=-1, y=-1, char=' ', color=concepts.ENTITY_DEFAULT):
+  def __init__(self, battleground, side=NEUTRAL_SIDE, x=-1, y=-1, sprite_name=' ', color=COLOR_WHITE):
     self.bg = battleground
     self.x = x
     self.y = y
     self.side = side
-    self.char = char
-    self.original_char = char
+    self.sprite_name = sprite_name
+    self.original_sprite_name = sprite_name
     self.color = color
     self.original_color = color
     self.bg.tiles[(x, y)].entity = self
@@ -48,16 +47,13 @@ class Entity(object):
 
   def clone(self, x, y): 
     if self.bg.is_inside(x, y) and self.bg.tiles[(x, y)].entity is None and self.bg.tiles[(x, y)].is_passable(self):
-      return self.__class__(self.bg, self.side, x, y, self.char, self.original_color)
+      return self.__class__(self.bg, self.side, x, y, self.sprite_name, self.original_color)
     return None
 
   def die(self):
     self.bg.tiles[(self.x, self.y)].entity = None
     self.alive = False
   
-  def get_char(self, x, y):
-    return self.char  
-
   def get_passable_neighbours(self):
     neighbours = [(self.x+i, self.y+j) for i in range(-1,2) for j in range(-1,2)] 
     return filter(lambda t: self.bg.tiles[t].passable and t != (self.x, self.y), neighbours)
@@ -116,11 +112,11 @@ class Entity(object):
       s.update()
 
 class BigEntity(Entity):
-  def __init__(self, battleground, side, x, y, chars=["a", "b", "c", "d"], colors=[concepts.ENTITY_DEFAULT]*4):
-    super(BigEntity, self).__init__(battleground, side, x, y, chars[0], colors[0])
-    self.chars = chars
+  def __init__(self, battleground, side, x, y, sprite_names=["a", "b", "c", "d"], colors=[COLOR_WHITE]*4):
+    super(BigEntity, self).__init__(battleground, side, x, y, sprite_names[0], colors[0])
+    self.sprite_names = sprite_names
     self.colors = colors
-    self.length = int(math.sqrt(len(self.chars)).real)
+    self.length = int(math.sqrt(len(self.sprite_names)).real)
     self.update_body()
   
   def can_be_pushed(self, dx, dy):
@@ -144,10 +140,6 @@ class BigEntity(Entity):
   def die(self):
     self.clear_body()
     self.alive = False
-  
-  def get_char(self, dx, dy):
-    self.color = self.colors[self.length*dx+dy]
-    return self.chars[self.length*dx+dy]
     
   def move(self, dx, dy):
     if self.pushed:
@@ -169,9 +161,9 @@ class BigEntity(Entity):
         self.bg.tiles[(self.x+i, self.y+j)].entity = self
       
 class Fortress(BigEntity):
-  def __init__(self, battleground, side=NEUTRAL_SIDE, x=-1, y=-1, chars=[':']*4, colors=[concepts.ENTITY_DEFAULT]*4, requisition_production=1):
-    super(Fortress, self).__init__(battleground, side, x, y, chars, colors)
-    self.capacity = len(chars)
+  def __init__(self, battleground, side=NEUTRAL_SIDE, x=-1, y=-1, sprite_names=[':']*4, colors=[COLOR_WHITE]*4, requisition_production=1):
+    super(Fortress, self).__init__(battleground, side, x, y, sprite_names, colors)
+    self.capacity = len(sprite_names)
     self.connected_fortresses = []
     self.guests = []
     self.name = "Fortress"
@@ -212,16 +204,16 @@ class Fortress(BigEntity):
     self.bg.tiles[(entity.x, entity.y)].entity = None
     (entity.x, entity.y) = (self.x, self.y)
     self.bg.generals.remove(entity)
-    self.chars[len(self.guests)] = entity.char
+    self.sprite_names[len(self.guests)] = entity.sprite_name
     self.colors[len(self.guests)] = entity.color
     self.guests.append(entity)
     self.update_body()
 
   def refresh_chars(self):
-    self.chars = [':']*len(self.chars)
-    self.colors = [concepts.ENTITY_DEFAULT]*len(self.colors)
+    self.sprite_names = [':']*len(self.sprite_names)
+    self.colors = [COLOR_WHITE]*len(self.colors)
     for i in range(len(self.guests)):
-      self.chars[i] = self.guests[i].char
+      self.sprite_names[i] = self.guests[i].sprite_name
       self.colors[i] = self.guests[i].color
 
   def unhost(self, entity):
@@ -233,7 +225,7 @@ class Fortress(BigEntity):
 
 class Mine(Entity):
   def __init__(self, battleground, x=-1, y=-1, power=50):
-    super(Mine, self).__init__(battleground, NEUTRAL_SIDE, x, y, 'X', concepts.EFFECT_DAMAGE)
+    super(Mine, self).__init__(battleground, NEUTRAL_SIDE, x, y, sprite_name='X', color=COLOR_WHITE)
     self.power = power
 
   def can_be_attacked(self):

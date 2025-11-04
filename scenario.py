@@ -5,8 +5,7 @@ from general import *
 from faction import *
 from window import *
 
-import concepts
-import libtcodpy as libtcod
+from config import COLOR_WHITE, STATUS_HEALTH_LOW, STATUS_HEALTH_MEDIUM, STATUS_PROGRESS_DARK, STATUS_PROGRESS_LIGHT, STATUS_SELECTED, UI_BACKGROUND
 
 import re
 
@@ -49,19 +48,18 @@ class Scenario(Window):
       general.requisition += self.requisition[general.side]
       self.requisition[general.side] = 0
 
-  def check_input(self, key, mouse, x, y):
-    n = self.keymap_generals.find(chr(key.c).upper()) # Number of the general pressed
-    # return None  # Simplified for now
-    if n != -1:
-      g = self.factions[self.side].generals[n]
-      if g.deployed:
-        self.selected_general = g
-        if not self.bg.is_inside(x, y):
-          return
-        return "move_gen{0} ({1},{2})\n".format(n, x, y) 
-      else:
-        self.selected_general = None
-        return "apply_req{0}\n".format(n)
+  def check_input(self, keys, mouse, x, y):
+    for i, key in enumerate(self.keymap_generals):
+        if keys[ord(key)]:
+            g = self.factions[self.side].generals[i]
+            if g.deployed:
+                self.selected_general = g
+                if not self.bg.is_inside(x, y):
+                    return
+                return "move_gen{0} ({1},{2})\n".format(i, x, y)
+            else:
+                self.selected_general = None
+                return "apply_req{0}\n".format(i)
     return None
 
   def deploy_general(self, general):
@@ -126,18 +124,18 @@ class Scenario(Window):
                   return
 
   def render_side_panel(self, i, bar_length, bar_offset_x):
-    self.con_panels[i].print(bar_offset_x-1, 0, " Requisition", concepts.UI_TEXT)
-    self.render_bar(self.con_panels[i], bar_offset_x, 1, bar_length, self.requisition[i], self.max_requisition, concepts.STATUS_PROGRESS_DARK, concepts.STATUS_PROGRESS_LIGHT, concepts.UI_BACKGROUND)
+    x_offset = i * (BG_WIDTH + PANEL_WIDTH) * 16
+    self.renderer.draw_text("Requisition", x_offset, 0)
+
     line = 4
     for j in range(0, len(self.factions[i].generals)):
       g = self.factions[i].generals[j]
-      fg_color = g.color if g == self.selected_general else concepts.STATUS_SELECTED
-      self.con_panels[i].print(bar_offset_x-1, line, " " + g.name, fg_color)
-      libtcod.console_put_char_ex(self.con_panels[i], bar_offset_x-1, line+1, KEYMAP_GENERALS[j], g.color, concepts.UI_BACKGROUND)
+      fg_color = g.color if g == self.selected_general else STATUS_SELECTED
+      self.renderer.draw_text(f"{KEYMAP_GENERALS[j]}: {g.name}", x_offset, line * 20, fg_color)
       if not g.deployed:
-        self.render_bar(self.con_panels[i], bar_offset_x, line+1, bar_length, g.requisition, g.cost, concepts.STATUS_PROGRESS_DARK, concepts.STATUS_PROGRESS_LIGHT, concepts.UI_BACKGROUND)
-      else: 
-        self.render_bar(self.con_panels[i], bar_offset_x, line+1, bar_length, g.hp, g.max_hp, concepts.STATUS_HEALTH_LOW, concepts.STATUS_HEALTH_MEDIUM, concepts.UI_BACKGROUND)
+        self.renderer.draw_text(f"Cost: {g.cost}", x_offset, (line + 1) * 20)
+      else:
+        self.renderer.draw_text(f"HP: {g.hp}/{g.max_hp}", x_offset, (line + 1) * 20)
       line += 3
 
   def start_battle(self, generals):

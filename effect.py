@@ -1,13 +1,12 @@
 import entity
 import status
 
-import concepts
-import libtcodpy as libtcod
+from config import COLOR_WHITE, EFFECT_ATTACK_LIGHT, EFFECT_ATTACK_MEDIUM, EFFECT_DAMAGE, EFFECT_WAVE
 from math import copysign
 import itertools
 
 class Effect(entity.Entity):
-  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, char=' ', color=concepts.ENTITY_DEFAULT):
+  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, char=' ', color=COLOR_WHITE):
     saved = battleground.tiles[(x, y)].entity
     super(Effect, self).__init__(battleground, side, x, y, char, color)
     self.bg.tiles[(x, y)].entity = saved
@@ -52,7 +51,7 @@ class Effect(entity.Entity):
 
 class Arrow(Effect):
   def __init__(self, battleground, side, x, y, power, attack_effects = ['>', '<']):
-    super(Arrow, self).__init__(battleground, side, x, y, attack_effects[side], concepts.EFFECT_ATTACK_MEDIUM)
+    super(Arrow, self).__init__(battleground, side, x, y, attack_effects[side], EFFECT_ATTACK_MEDIUM)
     self.power = power
     self.do_attack()
 
@@ -66,7 +65,7 @@ class Arrow(Effect):
     self.do_attack(True)
 
 class Blinking(Effect):
-  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, char=' ', color=concepts.ENTITY_DEFAULT):
+  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, char=' ', color=COLOR_WHITE):
     super(Blinking, self).__init__(battleground, side, x, y, char, color)
     self.visible = True
 
@@ -89,7 +88,7 @@ class Blinking(Effect):
       self.next_action -= 1
 
 class Boulder(Effect):
-  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, char='O', color=concepts.ENTITY_DEFAULT, power=10, delay=0, delta_power=-2):
+  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, char='O', color=COLOR_WHITE, power=10, delay=0, delta_power=-2):
     super(Boulder, self).__init__(battleground, side, x, y, char, color)
     self.power = power
     self.delta_power = delta_power
@@ -115,7 +114,7 @@ class Boulder(Effect):
       self.dissapear()
 
 class Bouncing(Effect):
-  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, char='o', color=concepts.ENTITY_DEFAULT, power=5, path=[]):
+  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, char='o', color=COLOR_WHITE, power=5, path=[]):
     super(Bouncing, self).__init__(battleground, side, x, y, char, color)
     self.path = path
     self.power = power
@@ -142,7 +141,7 @@ class Bouncing(Effect):
     self.position += self.direction
 
 class EffectLoop(Effect):
-  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, chars=[' '], color=concepts.ENTITY_DEFAULT, duration=1):
+  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, chars=[' '], color=COLOR_WHITE, duration=1):
     super(EffectLoop, self).__init__(battleground, side, x, y, chars[0], color)
     self.chars = chars
     self.duration = duration
@@ -162,7 +161,7 @@ class EffectLoop(Effect):
       self.dissapear()
 
 class Explosion(Effect):
-  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, char='*', color=concepts.EFFECT_ATTACK_LIGHT, power=10):
+  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, char='*', color=EFFECT_ATTACK_LIGHT, power=10):
     super(Explosion, self).__init__(battleground, side, x, y, char, color)
     self.power = power
 
@@ -174,16 +173,16 @@ class Explosion(Effect):
   def update(self):
     #TODO: generalize it to work with any starting color
     if not self.alive: return
-    if self.color == concepts.EFFECT_ATTACK_LIGHT:
-      self.color = concepts.EFFECT_ATTACK_MEDIUM
-    elif self.color == concepts.EFFECT_ATTACK_MEDIUM:
-      self.color = concepts.EFFECT_DAMAGE
+    if self.color == EFFECT_ATTACK_LIGHT:
+      self.color = EFFECT_ATTACK_MEDIUM
+    elif self.color == EFFECT_ATTACK_MEDIUM:
+      self.color = EFFECT_DAMAGE
     else:
       self.do_attack()
       self.dissapear()
 
 class Lava(Effect):
-  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, char='L', color=concepts.EFFECT_DAMAGE, power=5, duration=10):
+  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, char='L', color=EFFECT_DAMAGE, power=5, duration=10):
     super(Lava, self).__init__(battleground, side, x, y, char, color)
     self.power = power
     self.original_duration = duration
@@ -214,7 +213,7 @@ class Lava(Effect):
     self.duration -= 1
 
 class Pathing(Effect):
-  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, char=' ', color=concepts.ENTITY_DEFAULT):
+  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, char=' ', color=COLOR_WHITE):
     super(Pathing, self).__init__(battleground, side, x, y, char, color)
 
   def update(self):
@@ -222,7 +221,7 @@ class Pathing(Effect):
       self.dissapear()
 
 class Orb(Pathing):
-  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, char='o', color=concepts.ENTITY_DEFAULT,
+  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, char='o', color=COLOR_WHITE,
                power=15, attack_type="magical"):
     super(Orb, self).__init__(battleground, side, x, y, char, color)
     self.power = power
@@ -244,7 +243,7 @@ class Orb(Pathing):
             self.attacked_entities.append(entity)
 
 class Slash(Effect):
-  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, char='|', color=concepts.ENTITY_DEFAULT, power=10, steps=8, goto=1, area=None):
+  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, char='|', color=COLOR_WHITE, power=10, steps=8, goto=1, area=None):
     super(Slash, self).__init__(battleground, side, x, y, char, color)
     self.general = self.bg.generals[side]
     self.max_steps = steps
@@ -275,7 +274,7 @@ class Slash(Effect):
     self.do_attack()
 
 class TempEffect(Effect):
-  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, char=' ', color=concepts.ENTITY_DEFAULT, duration=1):
+  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, char=' ', color=COLOR_WHITE, duration=1):
     super(TempEffect, self).__init__(battleground, side, x, y, char, color)
     self.duration = duration
 
@@ -291,7 +290,7 @@ class TempEffect(Effect):
       self.dissapear()
 
 class Thunder(Effect):
-  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, char='|', color=concepts.EFFECT_ATTACK_LIGHT, power=30, area=None):
+  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, char='|', color=EFFECT_ATTACK_LIGHT, power=30, area=None):
     self.target_y = y
     self.power = power
     self.area = area
@@ -307,16 +306,16 @@ class Thunder(Effect):
   def update(self):
     #TODO: generalize it to work with any starting color
     if not self.alive: return
-    if self.color == concepts.EFFECT_ATTACK_LIGHT:
-      self.color = concepts.EFFECT_ATTACK_MEDIUM
-    elif self.color == concepts.EFFECT_ATTACK_MEDIUM:
-      self.color = concepts.EFFECT_DAMAGE
+    if self.color == EFFECT_ATTACK_LIGHT:
+      self.color = EFFECT_ATTACK_MEDIUM
+    elif self.color == EFFECT_ATTACK_MEDIUM:
+      self.color = EFFECT_DAMAGE
     elif self.y != self.target_y:
       self.move(0, 1)
-      self.color = concepts.EFFECT_ATTACK_LIGHT
+      self.color = EFFECT_ATTACK_LIGHT
     else:
       self.dissapear()
-      e = Explosion(self.bg, self.side, self.x, self.y, '*', concepts.EFFECT_ATTACK_LIGHT, self.power)
+      e = Explosion(self.bg, self.side, self.x, self.y, '*', EFFECT_ATTACK_LIGHT, self.power)
       if self.area:
         for t in self.area.get_tiles(self.x, self.y):
           if (t.x, t.y) != (e.x, e.y):
@@ -324,7 +323,7 @@ class Thunder(Effect):
 
 class Wave(Effect):
   def __init__(self, battleground, side, x, y, power):
-    super(Wave, self).__init__(battleground, side, x, y, '~', concepts.EFFECT_WAVE)
+    super(Wave, self).__init__(battleground, side, x, y, '~', EFFECT_WAVE)
     self.power = power
     self.entities_attacked = []
     self.do_attack()
