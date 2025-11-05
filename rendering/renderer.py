@@ -35,7 +35,7 @@ class Renderer:
         """Clear screen with given color"""
         self.screen.fill(color)
 
-    def draw_sprite(self, surface, pixel_x, pixel_y, centered=True):
+    def draw_sprite(self, surface, pixel_x, pixel_y, centered=True, mirrored=False):
         """
         Draw sprite at absolute pixel coordinates.
 
@@ -44,6 +44,7 @@ class Renderer:
             pixel_x: Absolute screen X coordinate
             pixel_y: Absolute screen Y coordinate
             centered: Whether to center sprite on the coordinate
+            mirrored: Whether to flip the sprite horizontally
         """
         if surface is None:
             if DEBUG:
@@ -58,6 +59,10 @@ class Renderer:
                     rect.center = (pixel_x, pixel_y)
                 pygame.draw.rect(self.screen, (255, 0, 255), rect)
             return
+
+        # Apply horizontal mirroring if needed
+        if mirrored:
+            surface = pygame.transform.flip(surface, True, False)
 
         # The calling code now provides the final pixel coordinates.
         # We just need to handle centering.

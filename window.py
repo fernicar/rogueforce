@@ -219,7 +219,9 @@ class Window(object):
                   # We calculate the center of the tile for centered drawing
                   center_pixel_x = pixel_x + TILE_SIZE // 2
                   center_pixel_y = pixel_y + TILE_SIZE // 2
-                  self.renderer.draw_sprite(sprite, center_pixel_x, center_pixel_y)
+                  # Apply horizontal mirroring if the entity is mirrored
+                  mirrored = getattr(drawable, 'mirrored', False)
+                  self.renderer.draw_sprite(sprite, center_pixel_x, center_pixel_y, mirrored=mirrored)
               else:
                   # Fallback to text for entities without sprites
                   char_to_draw = drawable.char if hasattr(drawable, 'char') else '?'

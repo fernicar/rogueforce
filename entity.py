@@ -30,6 +30,17 @@ class Entity(object):
     self.kills = 0
     self.owner = None
     self.animation = None  # Defer sprite loading until pygame is initialized
+    
+    # Horizontal mirroring state
+    self.mirrored = False
+    self.last_direction = 1  # 1 for right, -1 for left, 0 for stationary
+    
+    # Check initial spawn position for mirroring (case A: spawning on the right)
+    if self.bg and hasattr(self.bg, 'width'):
+      # If spawning on the right half of the arena, mirror the character
+      if self.x >= self.bg.width // 2:
+        self.mirrored = True
+        self.last_direction = -1
 
   def load_sprites(self):
     """Load sprites after pygame display is initialized"""
@@ -60,10 +71,22 @@ class Entity(object):
     self.bg = bg
     (self.x, self.y) = (x, y)
     self.bg.tiles[(self.x, self.y)].entity = self
+    
+    # Update mirroring based on new position (case A: spawning on right)
+    if self.x >= self.bg.width // 2:
+      self.mirrored = True
+      self.last_direction = -1
+    else:
+      self.mirrored = False
+      self.last_direction = 1
 
   def clone(self, x, y): 
     if self.bg.is_inside(x, y) and self.bg.tiles[(x, y)].entity is None and self.bg.tiles[(x, y)].is_passable(self):
-      return self.__class__(self.bg, self.side, x, y, self.sprite_name, self.character_name, self.original_color)
+      cloned = self.__class__(self.bg, self.side, x, y, self.sprite_name, self.character_name, self.original_color)
+      # Preserve mirroring state in clone
+      cloned.mirrored = self.mirrored
+      cloned.last_direction = self.last_direction
+      return cloned
     return None
 
   def die(self):
@@ -95,6 +118,16 @@ class Entity(object):
       next_tile.entity = self
       self.x += dx
       self.y += dy
+      
+      # Track movement direction and update mirroring (case B: walking left/right)
+      if dx != 0:  # Only track horizontal movement
+        self.last_direction = 1 if dx > 0 else -1
+        # Mirror when walking left, un-mirror when walking right
+        if self.last_direction == -1:
+          self.mirrored = True
+        else:
+          self.mirrored = False
+      
       if self.animation: self.animation.set_state('walk')
       return True
     return False
@@ -123,6 +156,15 @@ class Entity(object):
       self.bg.tiles[(x, y)].entity = self
       self.bg.tiles[(self.x, self.y)].entity = None
       (self.x, self.y) = (x, y)
+      
+      # Update mirroring based on new position (case A: spawning on right)
+      if self.x >= self.bg.width // 2:
+        self.mirrored = True
+        self.last_direction = -1
+      else:
+        self.mirrored = False
+        self.last_direction = 1
+      
       return True
     return False
 
@@ -174,6 +216,16 @@ class BigEntity(Entity):
       next_tile.entity = self
       self.x += dx
       self.y += dy
+      
+      # Track movement direction and update mirroring for BigEntity too
+      if dx != 0:  # Only track horizontal movement
+        self.last_direction = 1 if dx > 0 else -1
+        # Mirror when walking left, un-mirror when walking right
+        if self.last_direction == -1:
+          self.mirrored = True
+        else:
+          self.mirrored = False
+      
       self.update_body()
 
   def update_body(self):
