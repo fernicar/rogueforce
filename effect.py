@@ -1,7 +1,7 @@
 import entity
 import status
 
-from config import COLOR_WHITE
+from concepts import EFFECT_HIGHLIGHT
 from math import copysign
 import itertools
 
@@ -12,7 +12,7 @@ EFFECT_DAMAGE = (255, 0, 0) # Red
 EFFECT_WAVE = (0, 0, 255) # Blue
 
 class Effect(entity.Entity):
-  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, character_name=' ', color=COLOR_WHITE):
+  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, character_name=' ', color=EFFECT_HIGHLIGHT):
     saved = battleground.tiles[(x, y)].entity
     super(Effect, self).__init__(battleground, side, x, y, character_name, character_name, color)
     self.bg.tiles[(x, y)].entity = saved
@@ -71,7 +71,7 @@ class Arrow(Effect):
     self.do_attack(True)
 
 class Blinking(Effect):
-  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, character_name=' ', color=COLOR_WHITE):
+  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, character_name=' ', color=EFFECT_HIGHLIGHT):
     super(Blinking, self).__init__(battleground, side, x, y, character_name, color)
     self.visible = True
 
@@ -94,7 +94,7 @@ class Blinking(Effect):
       self.next_action -= 1
 
 class Boulder(Effect):
-  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, character_name='O', color=COLOR_WHITE, power=10, delay=0, delta_power=-2):
+  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, character_name='O', color=EFFECT_HIGHLIGHT, power=10, delay=0, delta_power=-2):
     super(Boulder, self).__init__(battleground, side, x, y, character_name, color)
     self.power = power
     self.delta_power = delta_power
@@ -120,7 +120,7 @@ class Boulder(Effect):
       self.dissapear()
 
 class Bouncing(Effect):
-  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, character_name='o', color=COLOR_WHITE, power=5, path=[]):
+  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, character_name='o', color=EFFECT_HIGHLIGHT, power=5, path=[]):
     super(Bouncing, self).__init__(battleground, side, x, y, character_name, color)
     self.path = path
     self.power = power
@@ -147,7 +147,7 @@ class Bouncing(Effect):
     self.position += self.direction
 
 class EffectLoop(Effect):
-  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, character_names=[' '], color=COLOR_WHITE, duration=1):
+  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, character_names=[' '], color=EFFECT_HIGHLIGHT, duration=1):
     super(EffectLoop, self).__init__(battleground, side, x, y, character_names[0], color)
     self.character_names = character_names
     self.duration = duration
@@ -218,7 +218,7 @@ class Lava(Effect):
     self.duration -= 1
 
 class Pathing(Effect):
-  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, character_name=' ', color=COLOR_WHITE):
+  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, character_name=' ', color=EFFECT_HIGHLIGHT):
     super(Pathing, self).__init__(battleground, side, x, y, character_name, color)
 
   def update(self):
@@ -226,7 +226,7 @@ class Pathing(Effect):
       self.dissapear()
 
 class Orb(Pathing):
-  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, character_name='o', color=COLOR_WHITE,
+  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, character_name='o', color=EFFECT_HIGHLIGHT,
                power=15, attack_type="magical"):
     super(Orb, self).__init__(battleground, side, x, y, character_name, color)
     self.power = power
@@ -248,7 +248,7 @@ class Orb(Pathing):
             self.attacked_entities.append(entity)
 
 class Slash(Effect):
-  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, character_name='|', color=COLOR_WHITE, power=10, steps=8, goto=1, area=None):
+  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, character_name='|', color=EFFECT_HIGHLIGHT, power=10, steps=8, goto=1, area=None):
     super(Slash, self).__init__(battleground, side, x, y, character_name, color)
     self.general = self.bg.generals[side]
     self.max_steps = steps
@@ -279,7 +279,7 @@ class Slash(Effect):
     self.do_attack()
 
 class TempEffect(Effect):
-  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, character_name=' ', color=COLOR_WHITE, duration=1):
+  def __init__(self, battleground, side=entity.NEUTRAL_SIDE, x=-1, y=-1, character_name=' ', color=EFFECT_HIGHLIGHT, duration=1):
     super(TempEffect, self).__init__(battleground, side, x, y, character_name, color)
     self.duration = duration
 

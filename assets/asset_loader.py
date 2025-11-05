@@ -175,7 +175,10 @@ class AssetLoader:
             'flinch_1', 'flinch_2'
         ]
 
-        if not character_name or not character_name.isalnum():
+        # Check if character_name is valid (string and alphanumeric)
+        if not character_name or not isinstance(character_name, str) or not character_name.isalnum():
+            if DEBUG:
+                print(f"[SPRITE WARNING] Invalid character_name: {character_name} (type: {type(character_name)})")
             return {sprite_name: None for sprite_name in sprite_names}
 
         # Use appropriate scaling based on character type

@@ -25,11 +25,6 @@ MUSIC_PATH = f'{ASSET_ROOT}/music'
 GENERAL_SCALE = 0.08
 MINION_SCALE = 0.04
 
-# Colors (RGB tuples)
-COLOR_BLACK = (0, 0, 0)
-COLOR_WHITE = (255, 255, 255)
-COLOR_BACKGROUND = (20, 20, 40)
-
 # UI Layout (in pixels)
 # These values are derived from the old tcod layout constants
 PANEL_WIDTH = 16  # Character width for side panels

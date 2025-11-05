@@ -8,7 +8,7 @@ more maintainable and intuitive code.
 class UIConcepts:
     """UI-related visual concepts"""
     TEXT_DEFAULT = (255, 255, 255)        # White for default text
-    BACKGROUND_BASE = (0, 0, 0)           # Black for background
+    BACKGROUND_BASE = (20, 20, 40)        # Dark blue, as per new config
     HOVER_VALID = (0, 255, 0)             # Green for valid hover states
     HOVER_INVALID = (255, 0, 0)           # Red for invalid hover states
     HOVER_DEFAULT = (0, 0, 255)           # Blue for default hover states
@@ -48,6 +48,7 @@ class EffectConcepts:
     ATTACK_MEDIUM = (255, 128, 128)       # Light Red for medium attack effects  
     DAMAGE_IMPACT = (255, 0, 0)           # Red for damage indicators
     WAVE_MOVEMENT = (128, 128, 255)       # Light Blue for wave effects
+    HIGHLIGHT = (255, 255, 255)           # White for highlighted effects
 
 # Convenience mappings for backward compatibility during migration
 CONCEPT_MAPPINGS = {
@@ -83,6 +84,7 @@ CONCEPT_MAPPINGS = {
     'STATUS_SELECTED': StatusConcepts.SELECTION_HIGHLIGHT,
     
     # Effect Concepts
+    'EFFECT_HIGHLIGHT': EffectConcepts.HIGHLIGHT,
     'EFFECT_ATTACK_LIGHT': EffectConcepts.ATTACK_LIGHT,
     'EFFECT_ATTACK_MEDIUM': EffectConcepts.ATTACK_MEDIUM,
     'EFFECT_DAMAGE': EffectConcepts.DAMAGE_IMPACT,
@@ -118,6 +120,7 @@ STATUS_PROGRESS_DARK = StatusConcepts.PROGRESS_DARK
 STATUS_PROGRESS_LIGHT = StatusConcepts.PROGRESS_LIGHT
 STATUS_SELECTED = StatusConcepts.SELECTION_HIGHLIGHT
 
+EFFECT_HIGHLIGHT = EffectConcepts.HIGHLIGHT
 EFFECT_ATTACK_LIGHT = EffectConcepts.ATTACK_LIGHT
 EFFECT_ATTACK_MEDIUM = EffectConcepts.ATTACK_MEDIUM
 EFFECT_DAMAGE = EffectConcepts.DAMAGE_IMPACT

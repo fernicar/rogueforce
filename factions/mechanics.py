@@ -5,55 +5,75 @@ from minion import Minion, BigMinion
 from skill import *
 import sieve
 
-from config import COLOR_WHITE
+import concepts
 
 class Flappy(General):
-  def __init__(self, battleground, side, x=-1, y=-1, name="Flappy", color=COLOR_WHITE):
+  def __init__(self, battleground, side, x=-1, y=-1, name="Flappy", color=concepts.UI_TEXT):
     super(Flappy, self).__init__(battleground, side, x, y, name, color)
     self.character_name = "flappy"  # Lowercase to match sprite directory
     self.death_quote = "I'll be back, like a boo... me..."
-    self.minion = Minion(self.bg, self.side, name="goblin")
+    self.minion = Minion(self.bg, self.side, name="flappy")
 
   def draw_slingshot(self):
     if self.side:
-      self.slingshot.chars[2], self.slingshot.chars[5] = self.slingshot.chars[5], self.slingshot.chars[2]
+      self.slingshot.sprite_names[2], self.slingshot.sprite_names[5] = self.slingshot.sprite_names[5], self.slingshot.sprite_names[2]
     else:
-      self.slingshot.chars[8], self.slingshot.chars[5] = self.slingshot.chars[5], self.slingshot.chars[8]
+      self.slingshot.sprite_names[8], self.slingshot.sprite_names[5] = self.slingshot.sprite_names[5], self.slingshot.sprite_names[8]
 
   def initialize_skills(self):
     self.skills = []
-    self.skills.append(Skill(self, add_path, 5, [self.gobmerang], "Fire the Gobmerang!", "Launches Gobmerang to fly high in the air",
-                             Arc(self.bg, origin=(self.gobmerang.x, self.y), ratio_y=1)))
+    # Use getattr to handle cases where gobmerang/slingshot might not exist (for reserves)
+    gobmerang_ref = getattr(self, 'gobmerang', None)
+    slingshot_ref = getattr(self, 'slingshot', None)
+    
+    # Create a placeholder for skills that reference gobmerang
+    placeholder_gobmerang = gobmerang_ref or self  # Use self as fallback
+    
+    self.skills.append(Skill(self, add_path, 5, [placeholder_gobmerang], "Fire the Gobmerang!", "Launches Gobmerang to fly high in the air",
+                             Arc(self.bg, origin=(placeholder_gobmerang.x if placeholder_gobmerang != self else self.x, self.y), ratio_y=1)))
     self.skills.append(Skill(self, place_entity, 5, [Boulder(self.bg, delay=5)], "Drop the boulder!", "Tells Gobmerang to drop a boulder",
                              SingleTarget(self.bg)))
     self.skills.append(Skill(self, place_entity, 5, [Lava(self.bg)], "Burn them from above!", "Tells Gobmerang to drop a cauldron of oil",
                              SingleTarget(self.bg)))
     self.skills.append(Skill(self, add_path, 5, [], "Fire the Gobmerang!", "Launches Gobmerang to fly high in the air",
                              Arc(self.bg, origin=(self.x, self.y+1), ratio_y=1, steps=120)))
+    
+    # Handle slingshot reference for explosion area
+    if slingshot_ref:
+      explosion_area = CustomArea(self.bg, tiles=Circle(self.bg, radius=4).get_all_tiles(slingshot_ref.x+1, slingshot_ref.y+1))
+    else:
+      explosion_area = SingleTarget(self.bg)  # Fallback
+      
     self.skills.append(Skill(self, place_entity, 5, [Explosion(self.bg, power=20)], "Last chance, boom the machine!", "Explodes the slingshot",
-                             CustomArea(self.bg, tiles=Circle(self.bg, radius=4).get_all_tiles(self.slingshot.x+1, self.slingshot.y+1))))
+                             explosion_area))
 
   def start_battle(self):
-    self.boomerang = Bouncing(self.bg, char="(" if self.side else ")")
-    self.gobmerang = Pathing(self.bg, self.side, self.x + (-3 if self.side else 3), self.y, char='G')
-    self.slingshot = BigMinion(self.bg, self.side, self.x + (-4 if self.side else 2), self.y-1, name="Slingmerang",
-                               chars=list("//>\\~ ~\\|") if self.side else list("//|\\~ ~\\<"), colors=[concepts.ENTITY_DEFAULT]*9)
-    self.draw_slingshot()
-    self.slingshot_drawn = False
-    self.gobmerang_shot = False
+    # Only create special mechanics objects if the general is actually on the battlefield
+    if self.x >= 0 and self.y >= 0:
+      self.boomerang = Bouncing(self.bg, character_name="(" if self.side else ")")
+      self.gobmerang = Pathing(self.bg, self.side, self.x + (-3 if self.side else 3), self.y, character_name="flappy")
+      self.slingshot = BigMinion(self.bg, self.side, self.x + (-4 if self.side else 2), self.y-1, name="flappy",
+                                 chars=list("//>\\~ ~\\|") if self.side else list("//|\\~ ~\\<"), colors=[concepts.ENTITY_DEFAULT]*9)
+      self.draw_slingshot()
+      self.slingshot_drawn = False
+      self.gobmerang_shot = False
     super(Flappy, self).start_battle()
 
   def update(self):
     if not self.alive:
       return
-    if not self.slingshot.alive and self.gobmerang.alive and not self.gobmerang.path:
+    if hasattr(self, 'slingshot') and self.slingshot and not self.slingshot.alive and self.gobmerang.alive and not self.gobmerang.path:
       self.gobmerang.dissapear()
-    elif self.skills[0].cd == self.skills[0].max_cd-1 and not self.slingshot_drawn:
+    elif hasattr(self, 'slingshot') and self.slingshot and self.skills[0].cd == self.skills[0].max_cd-1 and not self.slingshot_drawn:
       self.draw_slingshot()
       self.slingshot_drawn = True
     super(Flappy, self).update()
 
   def use_skill(self, i, x, y):
+    # Check if special mechanics objects exist (they won't for reserves)
+    if not hasattr(self, 'slingshot') or not self.slingshot:
+      return False
+      
     if i == 0:
       if self.gobmerang.path:
         return False

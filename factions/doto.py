@@ -5,17 +5,12 @@ from sieve import *
 from skill import *
 from status import *
 
-from config import COLOR_WHITE
+import concepts
 
 import random
 
-FACTION_DOTO_DARK = (128, 0, 0)
-FACTION_DOTO_MEDIUM = (0, 128, 0)
-FACTION_DOTO_LIGHT = (0, 0, 128)
-FACTION_DOTO_PURE = (128, 128, 128)
-
 class Bloodrotter(General):
-  def __init__(self, battleground, side, x=-1, y=-1, name="Bloodrotter", color=FACTION_DOTO_DARK):
+  def __init__(self, battleground, side, x=-1, y=-1, name="Bloodrotter", color=concepts.FACTION_DOTO_DARK):
     super(Bloodrotter, self).__init__(battleground, side, x, y, name, color)
     self.character_name = "bloodrotter"  # Lowercase to match sprite directory
     self.max_hp = 250
@@ -56,7 +51,7 @@ class Bloodrotter(General):
     super(Bloodrotter, self).update()
 
 class Ox(General):
-  def __init__(self, battleground, side, x=-1, y=-1, name="Ox", color=FACTION_DOTO_MEDIUM):
+  def __init__(self, battleground, side, x=-1, y=-1, name="Ox", color=concepts.FACTION_DOTO_MEDIUM):
     super(Ox, self).__init__(battleground, side, x, y, name, color)
     self.character_name = "ox"  # Lowercase to match sprite directory
     self.rand = random.Random()
@@ -101,7 +96,7 @@ class Ox(General):
       return skill_used
 
 class Pock(General):
-  def __init__(self, battleground, side, x=-1, y=-1, name="Pock", color=FACTION_DOTO_LIGHT):
+  def __init__(self, battleground, side, x=-1, y=-1, name="Pock", color=concepts.FACTION_DOTO_LIGHT):
     super(Pock, self).__init__(battleground, side, x, y, name, color)
     self.character_name = "pock"  # Lowercase to match sprite directory
     self.max_hp = 250
@@ -144,7 +139,7 @@ class Pock(General):
     return skill_used
 
 class Rubock(General):
-  def __init__(self, battleground, side, x=-1, y=-1, name="Rubock", color=FACTION_DOTO_PURE):
+  def __init__(self, battleground, side, x=-1, y=-1, name="Rubock", color=concepts.FACTION_DOTO_PURE):
     super(Rubock, self).__init__(battleground, side, x, y, name, color)
     self.character_name = "rubock"  # Lowercase to match sprite directory
     self.copied_skill = 2

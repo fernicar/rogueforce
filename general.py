@@ -7,12 +7,12 @@ from status import *
 import effect
 import tactic
 
-from config import COLOR_WHITE
+from concepts import ENTITY_DEFAULT
 
 import math
 
 class General(Minion):
-  def __init__(self, battleground, side, x=-1, y=-1, name="General", color=COLOR_WHITE):
+  def __init__(self, battleground, side, x=-1, y=-1, name="General", color=ENTITY_DEFAULT):
     super(General, self).__init__(battleground, side, x, y, name[0], name, color) # Use name[0] as sprite_name/char
     self.max_hp = 300
     self.cost = 250
@@ -146,7 +146,7 @@ class General(Minion):
     return False
 
 class Conway(General):
-  def __init__(self, battleground, side, x=-1, y=-1, name="Conway", color=COLOR_WHITE):
+  def __init__(self, battleground, side, x=-1, y=-1, name="Conway", color=ENTITY_DEFAULT):
     super(Conway, self).__init__(battleground, side, x, y, name, color)
     self.death_quote = "This is more like a game of... death"
     self.tactics = [tactic.stop, tactic.null]
@@ -194,7 +194,7 @@ class Conway(General):
     super(Conway, self).update()
 
 class Emperor(General):
-  def __init__(self, battleground, side, x=-1, y=-1, name="Emperor", color=COLOR_WHITE):
+  def __init__(self, battleground, side, x=-1, y=-1, name="Emperor", color=ENTITY_DEFAULT):
     super(Emperor, self).__init__(battleground, side, x, y, name, color)
     self.max_hp = 60
     self.death_quote = "Nightspirit... embrace my soul..."
@@ -232,7 +232,7 @@ class Emperor(General):
     self.hp = self.max_hp
     self.character_name = 'Nightspirit'
     self.name = "Nightspirit"
-    self.original_color = COLOR_WHITE
+    self.original_color = ENTITY_DEFAULT
     self.color = self.original_color
     self.skills = []
     self.skills.append(Skill(self, sonic_waves, 50, [10, 3], "Thus spake the Nightspirit", ""))

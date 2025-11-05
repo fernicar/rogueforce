@@ -12,7 +12,7 @@ You MUST NOT use the following commands:
 
 When you need to perform operations that would typically use these commands, you MUST instead use Cline's built-in tools:
 
-- **For file modifications**: Use `write_to_file` or `replace_in_file` tools
+- **For file modifications**: Use `replace_in_file` if it doesn't fail the first tiem, else `write_to_file` tool
 - **For text processing**: Use `read_file` to read content, process it programmatically, then use `write_to_file` to save changes
 - **For pattern matching**: Use `search_files` with regex patterns
 

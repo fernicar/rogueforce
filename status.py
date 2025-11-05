@@ -3,9 +3,8 @@ import area
 import effect
 import skill
 import tactic
-
-from config import COLOR_WHITE, COLOR_BACKGROUND
-import pygame
+import concepts
+from pygame import Color
 import random
 
 class Status(object):
@@ -89,7 +88,7 @@ class Bleeding(Status):
     if (self.last_x, self.last_y) != (self.entity.x, self.entity.y):
       diff = max(abs(self.last_x - self.entity.x), abs(self.last_y - self.entity.y))
       self.entity.get_attacked(self.owner, diff*self.power, None, "magical")
-      effect.TempEffect(self.entity.bg, self.entity.side, self.last_x, self.last_y, '*', COLOR_WHITE)
+      effect.TempEffect(self.entity.bg, self.entity.side, self.last_x, self.last_y, '*', concepts.UI_TEXT)
       (self.last_x, self.last_y) = (self.entity.x, self.entity.y)
 
 class Blind(Status):
@@ -155,7 +154,7 @@ class Jumping(Status):
     self.rand.seed(duration)
     self.already_hit = []
     if entity:
-      self.attack_effect = effect.TempEffect(entity.bg, character_name='-', color=owner.color if owner else COLOR_WHITE)
+      self.attack_effect = effect.TempEffect(entity.bg, character_name='-', color=owner.color if owner else concepts.UI_TEXT)
 
   def clone(self, entity):
     return self.__class__(entity, self.owner, self.duration, self.name,
@@ -184,7 +183,7 @@ class Lifted(Status):
     self.land_status = land_status
     self.skill = skill.Skill(owner, skill.apply_status, 0, [land_status], area=land_area)
     if entity:
-      effect.TempEffect(entity.bg, x=entity.x, y=entity.y, character_name='^', color=owner.color if owner else COLOR_WHITE, duration=duration)
+      effect.TempEffect(entity.bg, x=entity.x, y=entity.y, character_name='^', color=owner.color if owner else concepts.UI_TEXT, duration=duration)
 
   def clone(self, entity):
     return self.__class__(entity, self.owner, self.duration, self.name, self.land_area, self.land_status)
@@ -218,9 +217,9 @@ class Linked(Status):
     super(Linked, self).end()
     self.duration = -1
     if self.entity and self.entity.bg and self.tiles:
-      self.entity.bg.tiles[(self.entity.x, self.entity.y)].bg_color = COLOR_BACKGROUND
+      self.entity.bg.tiles[(self.entity.x, self.entity.y)].bg_color = concepts.UI_BACKGROUND
       for t in self.tiles:
-        t.bg_color = COLOR_BACKGROUND
+        t.bg_color = concepts.UI_BACKGROUND
     
   def update(self):
     super(Linked, self).update()
@@ -233,7 +232,7 @@ class Linked(Status):
         self.entity.get_attacked(self)
         self.end()
       else:
-        t.bg_color = pygame.Color(UI_BACKGROUND).lerp(self.owner.original_color, 0.4)
+        t.bg_color = Color(concepts.UI_BACKGROUND).lerp(self.owner.original_color, 0.4)
 
 class Poison(Status):
   def __init__(self, entity=None, owner=None, power=0, tbt=0, ticks=9999, name="Poison"):
@@ -302,7 +301,7 @@ class Recalling(Status):
     if self.duration > 0 and self.entity and self.entity.bg and self.color:
       self.entity.next_action = 100
       tile = self.entity.bg.tiles[(self.entity.x, self.entity.y)]
-      self.entity.color = pygame.Color(tile.bg_color).lerp(self.color, 1-(self.duration/10.0))
+      self.entity.color = Color(tile.bg_color).lerp(self.color, 1-(self.duration/10.0))
 
   def end(self):
     super(Recalling, self).end()
@@ -392,7 +391,7 @@ class Vanishing(Status):
       self.entity.next_action = 100
       tile = self.entity.bg.tiles[(self.entity.x, self.entity.y)]
       if self.entity.color and tile.bg_color:
-        self.entity.color = pygame.Color(self.entity.color).lerp(tile.bg_color, 1-(self.duration/10.0))
+        self.entity.color = Color(self.entity.color).lerp(tile.bg_color, 1-(self.duration/10.0))
 
   def end(self):
     super(Vanishing, self).end()

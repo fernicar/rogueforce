@@ -5,8 +5,9 @@ import pygame
 from config import (
     WINDOW_WIDTH, WINDOW_HEIGHT, FPS,
     BG_WIDTH, BG_HEIGHT, TILE_SIZE,
-    COLOR_BLACK, COLOR_WHITE, COLOR_BACKGROUND, DEBUG
+    DEBUG
 )
+from concepts import UI_TEXT, UI_BACKGROUND
 
 class Renderer:
     """Main rendering class using Pygame"""
@@ -30,7 +31,7 @@ class Renderer:
             print(f"[RENDERER] Grid: {BG_WIDTH}x{BG_HEIGHT} tiles")
             print(f"[RENDERER] Tile size: {TILE_SIZE}px")
 
-    def clear(self, color=COLOR_BACKGROUND):
+    def clear(self, color=UI_BACKGROUND):
         """Clear screen with given color"""
         self.screen.fill(color)
 
@@ -70,7 +71,7 @@ class Renderer:
 
         self.screen.blit(surface, draw_pos)
 
-    def draw_text(self, text, x, y, color=COLOR_WHITE, large=False):
+    def draw_text(self, text, x, y, color=UI_TEXT, large=False):
         """Draw text at pixel coordinates"""
         font = self.large_font if large else self.font
         text_surface = font.render(str(text), True, color)

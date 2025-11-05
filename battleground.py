@@ -1,5 +1,5 @@
 import entity
-from config import COLOR_BACKGROUND, COLOR_WHITE, COLOR_BLACK
+import concepts
 import sys
 import os
 
@@ -30,13 +30,13 @@ class Battleground(object):
       for y in range(self.height):
         if x in [0, self.width-1] or y in [0, self.height-1]: # Walls
           self.tiles[(x,y)] = Tile(x, y, "#", False)
-          self.tiles[(x,y)].color = COLOR_WHITE
+          self.tiles[(x,y)].color = concepts.UI_TEXT
         else: # Floor
           self.tiles[(x,y)] = Tile(x, y)
           self.tiles[(x,y)].char = '.'
-          self.tiles[(x,y)].color = (200, 200, 200)
+          self.tiles[(x,y)].color = concepts.UI_TILE_NEUTRAL
 
-  def hover_tiles(self, l, color=COLOR_WHITE):
+  def hover_tiles(self, l, color=concepts.UI_HOVER_DEFAULT):
     self.unhover_tiles()
     for t in l:
       t.hover(color)
@@ -58,7 +58,7 @@ class Battleground(object):
         x += 1
     f.close()
     for f in forts:
-      self.fortresses.append(entity.Fortress(self, entity.NEUTRAL_SIDE, f[0], f[1], [self.tiles[f].char]*4, [COLOR_BACKGROUND]*4))
+      self.fortresses.append(entity.Fortress(self, entity.NEUTRAL_SIDE, f[0], f[1], [self.tiles[f].char]*4, [concepts.UI_BACKGROUND]*4))
 
   def unhover_tiles(self):
     for t in self.hovered:
@@ -68,9 +68,9 @@ class Tile(object):
   def __init__(self, x, y, char='.', passable=True):
     self.passable = passable
     self.char = char
-    self.color = COLOR_BLACK
-    self.bg_original_color = COLOR_BACKGROUND
-    self.bg_color = COLOR_BACKGROUND
+    self.color = concepts.ENTITY_DEFAULT
+    self.bg_original_color = concepts.UI_BACKGROUND
+    self.bg_color = concepts.UI_BACKGROUND
     self.entity = None
     self.effects = []
     self.x = x
@@ -82,7 +82,7 @@ class Tile(object):
   def is_passable(self, passenger):
     return self.passable and (self.entity == None or self.entity.is_ally(passenger))
 
-  def hover(self, color=COLOR_WHITE):
+  def hover(self, color=concepts.UI_HOVER_DEFAULT):
     self.bg_color = color
 
   def unhover(self):

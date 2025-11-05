@@ -1,6 +1,6 @@
 from entity import Entity
 from entity import BigEntity
-from config import COLOR_WHITE
+import concepts
 
 import effect
 import tactic
@@ -8,7 +8,7 @@ import tactic
 from collections import defaultdict
 
 class Minion(Entity):
-  def __init__(self, battleground, side, x=-1, y=-1, name="minion", character_name=None, color=COLOR_WHITE, sprite_name=None):
+  def __init__(self, battleground, side, x=-1, y=-1, name="minion", character_name=None, color=concepts.UI_TEXT, sprite_name=None):
     super(Minion, self).__init__(battleground, side, x, y, 'm' if not sprite_name else sprite_name, character_name if character_name else name, color) # Default char is 'm'
     self.name = name
     self.max_hp = 30
@@ -95,8 +95,8 @@ class Minion(Entity):
         self.color = (255, 0, 0)  # Changed from libtcod.Color to pygame tuple
 
 class BigMinion(BigEntity, Minion):
-  def __init__(self, battleground, side, x=-1, y=-1, name="Giant", chars=['G']*4, colors=[COLOR_WHITE]*4):
-    BigEntity.__init__(self, battleground, side, x, y, chars, colors)
+  def __init__(self, battleground, side, x=-1, y=-1, name="Giant", chars=['G']*4, colors=[concepts.UI_TEXT]*4):
+    BigEntity.__init__(self, battleground, side, x, y, sprite_names=chars, colors=colors)
     Minion.__init__(self, battleground, side, x, y, name, name, colors[0])
     self.max_hp *= self.length
     self.hp = self.max_hp
@@ -118,7 +118,7 @@ class BigMinion(BigEntity, Minion):
     return None
 
 class RangedMinion(Minion):
-  def __init__(self, battleground, side, x=-1, y=-1, name="archer", character_name=None, color=COLOR_WHITE, attack_effects = ['>', '<']):
+  def __init__(self, battleground, side, x=-1, y=-1, name="archer", character_name=None, color=concepts.UI_TEXT, attack_effects = ['>', '<']):
     super(RangedMinion, self).__init__(battleground, side, x, y, name, character_name, color)
     self.max_hp = 10
     self.hp = 10

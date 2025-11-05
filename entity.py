@@ -1,4 +1,4 @@
-from config import COLOR_WHITE
+from concepts import ENTITY_DEFAULT
 from rendering.animation import Animation
 from assets.asset_loader import asset_loader
 import cmath as math
@@ -6,7 +6,7 @@ import cmath as math
 NEUTRAL_SIDE = 555
 
 class Entity(object):
-  def __init__(self, battleground, side=NEUTRAL_SIDE, x=-1, y=-1, sprite_name=' ', character_name=None, color=COLOR_WHITE):
+  def __init__(self, battleground, side=NEUTRAL_SIDE, x=-1, y=-1, sprite_name=' ', character_name=None, color=ENTITY_DEFAULT):
     self.bg = battleground
     self.x = x
     self.y = y
@@ -133,7 +133,7 @@ class Entity(object):
         self.animation.update()
 
 class BigEntity(Entity):
-  def __init__(self, battleground, side, x, y, sprite_names=["a", "b", "c", "d"], colors=[COLOR_WHITE]*4):
+  def __init__(self, battleground, side, x, y, sprite_names=["a", "b", "c", "d"], colors=[ENTITY_DEFAULT]*4):
     super(BigEntity, self).__init__(battleground, side, x, y, sprite_names[0], None, colors[0])
     self.sprite_names = sprite_names
     self.colors = colors
@@ -182,7 +182,7 @@ class BigEntity(Entity):
         self.bg.tiles[(self.x+i, self.y+j)].entity = self
       
 class Fortress(BigEntity):
-  def __init__(self, battleground, side=NEUTRAL_SIDE, x=-1, y=-1, sprite_names=[':']*4, colors=[COLOR_WHITE]*4, requisition_production=1):
+  def __init__(self, battleground, side=NEUTRAL_SIDE, x=-1, y=-1, sprite_names=[':']*4, colors=[ENTITY_DEFAULT]*4, requisition_production=1):
     super(Fortress, self).__init__(battleground, side, x, y, sprite_names, colors)
     self.capacity = len(sprite_names)
     self.connected_fortresses = []
@@ -229,7 +229,7 @@ class Fortress(BigEntity):
 
   def refresh_chars(self):
     self.sprite_names = [':']*len(self.sprite_names)
-    self.colors = [COLOR_WHITE]*len(self.colors)
+    self.colors = [ENTITY_DEFAULT]*len(self.colors)
     for i in range(len(self.guests)):
       self.sprite_names[i] = self.guests[i].sprite_name
       self.colors[i] = self.guests[i].color
@@ -243,7 +243,7 @@ class Fortress(BigEntity):
 
 class Mine(Entity):
   def __init__(self, battleground, x=-1, y=-1, power=50):
-    super(Mine, self).__init__(battleground, NEUTRAL_SIDE, x, y, sprite_name='X', color=COLOR_WHITE)
+    super(Mine, self).__init__(battleground, NEUTRAL_SIDE, x, y, sprite_name='X', color=ENTITY_DEFAULT)
     self.power = power
 
   def can_be_attacked(self):

@@ -4,9 +4,10 @@ from rendering.renderer import Renderer
 from assets.asset_loader import asset_loader
 import pygame
 from config import (
-    COLOR_WHITE, COLOR_BACKGROUND, COLOR_BLACK, TILE_SIZE, DEBUG,
+    TILE_SIZE, DEBUG,
     BATTLEGROUND_OFFSET, PANEL_PIXEL_WIDTH, BATTLEGROUND_PIXEL_WIDTH
 )
+from concepts import UI_HOVER_VALID, UI_BACKGROUND
 
 import socket
 import sys
@@ -43,7 +44,7 @@ class Window(object):
 
     self.game_msgs = []
     self.game_over = False
-    self.area_hover_color = COLOR_WHITE
+    self.area_hover_color = UI_HOVER_VALID
     self.area_hover_color_invalid = (255, 0, 0) # Red for invalid
     self.default_hover_color = (200, 200, 200) # Light grey for default
     self.default_hover_function = SingleTarget(self.bg).get_all_tiles
@@ -92,7 +93,7 @@ class Window(object):
       
       return grid_x, grid_y
 
-  def message(self, new_msg, color=COLOR_WHITE):
+  def message(self, new_msg, color=UI_HOVER_VALID):
     new_msg_lines = textwrap.wrap(new_msg, 58)  # Approximate MSG_WIDTH
     for line in new_msg_lines:
       if len(self.game_msgs) == 6:  # MSG_HEIGHT

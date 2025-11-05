@@ -4,19 +4,21 @@ from general import *
 from window import *
 
 from config import (
-    COLOR_WHITE, COLOR_BACKGROUND, WINDOW_WIDTH, WINDOW_HEIGHT, TILE_SIZE, DEBUG,
+    WINDOW_WIDTH, WINDOW_HEIGHT, TILE_SIZE, DEBUG,
     PANEL_PIXEL_WIDTH, BATTLEGROUND_OFFSET, MSG_LOG_OFFSET, INFO_BAR_OFFSET, BG_WIDTH, BG_HEIGHT
     
 )
 from concepts import (
     STATUS_HEALTH_LOW, STATUS_HEALTH_MEDIUM, STATUS_PROGRESS_DARK, 
-    STATUS_PROGRESS_LIGHT, UI_TEXT
+    STATUS_PROGRESS_LIGHT, UI_TEXT, UI_BACKGROUND,
 )
 
 import copy
 import re
 import sys
 import pygame
+import random  # Import the random module
+from faction_data import ALL_GENERALS  # Import the generals list
 
 KEYMAP_SKILLS = "QWERTYUIOP"
 KEYMAP_SWAP = "123456789"
@@ -180,7 +182,7 @@ class BattleWindow(Window):
         # General's Name and HP Bar
         self.renderer.draw_text(g.name, x_offset, y_offset, g.color, large=True)
         y_offset += 30
-        self.render_bar(x_offset, y_offset, bar_length, 20, g.hp, g.max_hp, STATUS_HEALTH_LOW, STATUS_HEALTH_MEDIUM, COLOR_BACKGROUND)
+        self.render_bar(x_offset, y_offset, bar_length, 20, g.hp, g.max_hp, STATUS_HEALTH_LOW, STATUS_HEALTH_MEDIUM, UI_TEXT)
         y_offset += 35
 
         # Skills List
@@ -189,7 +191,7 @@ class BattleWindow(Window):
             key_text = f"{skill_keys[j]}: " if is_player_side else ""
             self.renderer.draw_text(f"{key_text}{skill.quote}", x_offset, y_offset, UI_TEXT)
             y_offset += 20
-            self.render_bar(x_offset, y_offset, bar_length, 15, skill.cd, skill.max_cd, STATUS_PROGRESS_DARK, STATUS_PROGRESS_LIGHT, COLOR_BACKGROUND)
+            self.render_bar(x_offset, y_offset, bar_length, 15, skill.cd, skill.max_cd, STATUS_PROGRESS_DARK, STATUS_PROGRESS_LIGHT, UI_TEXT)
             y_offset += 30
 
         # Minion Count
@@ -208,9 +210,9 @@ class BattleWindow(Window):
             self.renderer.draw_text(f"{key_text}{r.name}", x_offset, y_offset, r.color)
             y_offset += 20
             if swap_ready:
-                self.render_bar(x_offset, y_offset, bar_length, 15, r.hp, r.max_hp, STATUS_HEALTH_LOW, STATUS_HEALTH_MEDIUM, COLOR_BACKGROUND)
+                self.render_bar(x_offset, y_offset, bar_length, 15, r.hp, r.max_hp, STATUS_HEALTH_LOW, STATUS_HEALTH_MEDIUM, UI_TEXT)
             else:
-                self.render_bar(x_offset, y_offset, bar_length, 15, g.swap_cd, g.swap_max_cd, STATUS_PROGRESS_DARK, STATUS_PROGRESS_LIGHT, COLOR_BACKGROUND)
+                self.render_bar(x_offset, y_offset, bar_length, 15, g.swap_cd, g.swap_max_cd, STATUS_PROGRESS_DARK, STATUS_PROGRESS_LIGHT, UI_TEXT)
             y_offset += 30
 
     def render_tactics(self, i, x_offset, y_offset, is_player_side):
@@ -231,7 +233,7 @@ class BattleWindow(Window):
         info_x, info_y = INFO_BAR_OFFSET
         
         # Clear the info area
-        self.renderer.draw_rect(info_x, info_y - 5, 60 * TILE_SIZE, 60, COLOR_BACKGROUND)  # 60 is GRID_WIDTH
+        self.renderer.draw_rect(info_x, info_y - 5, 60 * TILE_SIZE, 60, UI_BACKGROUND)  # 60 is GRID_WIDTH
 
         # Hovered tile entity info
         if self.bg.is_inside(grid_x, grid_y):
@@ -263,22 +265,20 @@ class BattleWindow(Window):
                 skill_index = (mouse_y - skill_start_y) // 50
                 if 0 <= skill_index < len(g.skills):
                     skill = g.skills[skill_index]
-                    self.renderer.draw_text(skill.description, info_x, info_y + 20, COLOR_WHITE)
+                    self.renderer.draw_text(skill.description, info_x, info_y + 20, UI_TEXT)
 
     def render_msgs(self):
         """Renders the message log."""
         msg_x, msg_y = MSG_LOG_OFFSET
         
         # Clear the message area
-        self.renderer.draw_rect(msg_x, 0, 60 * TILE_SIZE, BATTLEGROUND_OFFSET[1] - 5, COLOR_BACKGROUND)  # 60 is GRID_WIDTH
+        self.renderer.draw_rect(msg_x, 0, 60 * TILE_SIZE, BATTLEGROUND_OFFSET[1] - 5, UI_BACKGROUND)  # 60 is GRID_WIDTH
 
         y = msg_y
         for (line, color) in self.game_msgs:
             self.renderer.draw_text(line, msg_x, y, color)
             y += 15 # Line height
 
-
-from factions import doto
 
 if __name__ == "__main__":
     if DEBUG:
@@ -288,21 +288,45 @@ if __name__ == "__main__":
     bg = Battleground(BG_WIDTH, BG_HEIGHT)
     if DEBUG:
         sys.stdout.write("DEBUG: Battleground created\n")
+    
+    # --- Random General and Reserve Selection Logic ---
+    available_generals = list(ALL_GENERALS)
+    random.shuffle(available_generals)
+    
+    if len(available_generals) < 2:
+        raise ValueError("Not enough unique generals to start a battle!")
 
-    bg.generals = [doto.Pock(bg, 0, 3, 21), doto.Pock(bg, 1, 56, 21)]
-    if DEBUG:
-        sys.stdout.write("DEBUG: Generals created\n")
+    # Select main generals
+    gen0_class = available_generals.pop()
+    gen1_class = available_generals.pop()
+    
+    gen0 = gen0_class(bg, 0, 3, 21)
+    gen1 = gen1_class(bg, 1, 56, 21)
+    bg.generals = [gen0, gen1]
+    
+    print(f"BATTLE: {gen0.name} (Side 0) vs {gen1.name} (Side 1)")
 
-    for i in [0, 1]:
-        bg.reserves[i] = [doto.Rubock(bg, i), doto.Bloodrotter(bg, i), doto.Ox(bg, i)]
+    # Select reserves
+    num_reserves = min(len(available_generals) // 2, 3) # Up to 3 reserves per side
+    
+    bg.reserves = [[], []]
+    for i in range(num_reserves):
+        if available_generals:
+            reserve0_class = available_generals.pop()
+            bg.reserves[0].append(reserve0_class(bg, 0))
+        if available_generals:
+            reserve1_class = available_generals.pop()
+            bg.reserves[1].append(reserve1_class(bg, 1))
+
     if DEBUG:
-        sys.stdout.write("DEBUG: Reserves created\n")
+        sys.stdout.write(f"DEBUG: Side 0 General: {gen0.name}, Reserves: {[g.name for g in bg.reserves[0]]}\n")
+        sys.stdout.write(f"DEBUG: Side 1 General: {gen1.name}, Reserves: {[g.name for g in bg.reserves[1]]}\n")
 
     for i in [0, 1]:
         bg.generals[i].start_scenario()
         for g in bg.reserves[i]:
             g.start_scenario()
-
+            
     if DEBUG:
         sys.stdout.write("DEBUG: Scenarios started\n")
 

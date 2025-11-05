@@ -7,19 +7,19 @@ from sieve import *
 from skill import *
 from status import *
 
-from config import COLOR_WHITE
+import concepts
 
 import random
 
 class Slave(Minion):
-  def __init__(self, battleground, side, x=-1, y=-1, name="slave", char='s', color=COLOR_WHITE):
-    super(Slave, self).__init__(battleground, side, x, y, name, char, color)
+  def __init__(self, battleground, side, x=-1, y=-1, name="gemekaa", character_name=None, color=concepts.UI_TEXT):
+    super(Slave, self).__init__(battleground, side, x, y, name, character_name, color)
     self.max_hp = 10
     self.hp = 10
     self.power = 3
 
 class Gemekaa(General):
-  def __init__(self, battleground, side, x=-1, y=-1, name="Gemekaa", color=COLOR_WHITE):
+  def __init__(self, battleground, side, x=-1, y=-1, name="Gemekaa", color=concepts.UI_TEXT):
     super(Gemekaa, self).__init__(battleground, side, x, y, name, color)
     self.character_name = "gemekaa"  # Lowercase to match sprite directory
     self.max_hp = 70
