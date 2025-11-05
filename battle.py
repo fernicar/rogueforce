@@ -3,13 +3,20 @@ from battleground import Battleground
 from general import *
 from window import *
 
-from config import COLOR_WHITE, COLOR_BACKGROUND, WINDOW_WIDTH, WINDOW_HEIGHT
+from config import (
+    COLOR_WHITE, COLOR_BACKGROUND, WINDOW_WIDTH, WINDOW_HEIGHT, TILE_SIZE, DEBUG,
+    PANEL_PIXEL_WIDTH, BATTLEGROUND_OFFSET, MSG_LOG_OFFSET, INFO_BAR_OFFSET, BG_WIDTH, BG_HEIGHT
+    
+)
+from concepts import (
+    STATUS_HEALTH_LOW, STATUS_HEALTH_MEDIUM, STATUS_PROGRESS_DARK, 
+    STATUS_PROGRESS_LIGHT, UI_TEXT
+)
 
 import copy
 import re
 import sys
-
-from config import DEBUG
+import pygame
 
 KEYMAP_SKILLS = "QWERTYUIOP"
 KEYMAP_SWAP = "123456789"
@@ -149,115 +156,126 @@ class BattleWindow(Window):
                                     self.bg.generals[i].color,
                                 )
 
-    def render_msgs(self):
-        y = 0
-        for (line, color) in self.game_msgs:
-            self.renderer.draw_text(line, 0, y * 20, color)
-            y += 1
+    def render_panels(self):
+        """Draws the left and right UI panels."""
+        # Left Panel (Side 0)
+        self.render_side_panel(0)
+        # Right Panel (Side 1)
+        self.render_side_panel(1)
 
-def render_info(self, x, y):
-    # Clear the info area at the bottom of the screen
-    info_rect = (0, SCREEN_HEIGHT - 20, WINDOW_WIDTH, 20)
-    self.renderer.draw_rect(info_rect[0], info_rect[1], info_rect[2], info_rect[3], COLOR_BACKGROUND)
+    def render_side_panel(self, i):
+        """Renders a single side panel for the player or opponent."""
+        g = self.bg.generals[i]
+        is_player_side = (i == self.side)
+        
+        # Determine panel's top-left corner
+        if i == 0: # Left panel
+            x_offset = 10
+        else: # Right panel
+            x_offset = BATTLEGROUND_OFFSET[0] + (60 * TILE_SIZE) + 10  # 60 is GRID_WIDTH
 
-    # Base entity info (if hovering over the battleground)
-    if self.bg.is_inside(x, y):
-        entity = self.bg.tiles[(x, y)].entity
-        if entity:
-            if hasattr(entity, "hp"):
-                text = f"{entity.name.capitalize()}: HP {entity.hp}/{entity.max_hp}, PW {entity.power}"
-                self.renderer.draw_text(text, 250, WINDOW_HEIGHT - 60, entity.original_color)
-            else:
-                self.renderer.draw_text(entity.name.capitalize(), 250, WINDOW_HEIGHT - 60)
-        # Display coordinates
-        self.renderer.draw_text(f"{x}/{y}", WINDOW_WIDTH - 50, WINDOW_HEIGHT - 60)
+        y_offset = 20
+        bar_length = PANEL_PIXEL_WIDTH - 20
+        
+        # General's Name and HP Bar
+        self.renderer.draw_text(g.name, x_offset, y_offset, g.color, large=True)
+        y_offset += 30
+        self.render_bar(x_offset, y_offset, bar_length, 20, g.hp, g.max_hp, STATUS_HEALTH_LOW, STATUS_HEALTH_MEDIUM, COLOR_BACKGROUND)
+        y_offset += 35
 
-    # Check for hovering over side panels to show skill descriptions
-    mouse_x, mouse_y = pygame.mouse.get_pos()
+        # Skills List
+        skill_keys = "QWERTYUIOP"
+        for j, skill in enumerate(g.skills):
+            key_text = f"{skill_keys[j]}: " if is_player_side else ""
+            self.renderer.draw_text(f"{key_text}{skill.quote}", x_offset, y_offset, UI_TEXT)
+            y_offset += 20
+            self.render_bar(x_offset, y_offset, bar_length, 15, skill.cd, skill.max_cd, STATUS_PROGRESS_DARK, STATUS_PROGRESS_LIGHT, COLOR_BACKGROUND)
+            y_offset += 30
 
-    # Left Panel (Side 0)
-    if 0 < mouse_x < PANEL_WIDTH * TILE_SIZE:
-        i = 0
-    # Right Panel (Side 1)
-    elif (BG_WIDTH + PANEL_WIDTH) * TILE_SIZE < mouse_x < WINDOW_WIDTH:
-        i = 1
-    else:
-        return
+        # Minion Count
+        self.renderer.draw_text(f"{g.minions_alive} {g.minion.name}s", x_offset, y_offset, UI_TEXT)
+        y_offset += 30
 
-    g = self.bg.generals[i]
-    nskills = len(g.skills)
-    # Check if mouse_y is in the skill list area (adjust Y offset as needed)
-    start_y = 60
-    if (start_y) < mouse_y < (start_y + nskills * 30):
-        skill_index = (mouse_y - start_y) // 30
-        if 0 <= skill_index < len(g.skills):
-            skill = g.skills[skill_index]
-            self.renderer.draw_text(skill.description, 250, WINDOW_HEIGHT - 40, COLOR_WHITE)
-
-
-def render_panels(self):
-    # Left Panel
-    self.render_side_panel(0, 120, 10)
-    # Right Panel
-    self.render_side_panel(1, 120, (PANEL_WIDTH + BG_WIDTH) * TILE_SIZE + 10)
-
-
-def render_side_panel(self, i, bar_length, x_offset):
-    g = self.bg.generals[i]
-    y_offset = 30
-    
-    # General HP Bar
-    self.renderer.draw_text(g.name, x_offset, y_offset, g.color)
-    y_offset += 15
-    self.render_bar(x_offset, y_offset, bar_length, 15, g.hp, g.max_hp, (0, 150, 0), (150, 0, 0), COLOR_WHITE)
-    y_offset += 25
-
-    # Skills and Cooldown Bars
-    skill_keys = "QWERTYUIOP"
-    for j, skill in enumerate(g.skills):
-        self.renderer.draw_text(f"{skill_keys[j]}: {skill.quote}", x_offset, y_offset)
+        # Tactics
+        y_offset = self.render_tactics(i, x_offset, y_offset, is_player_side)
         y_offset += 15
-        self.render_bar(x_offset, y_offset, bar_length, 15, skill.cd, skill.max_cd, (0, 100, 200), (50, 50, 50), COLOR_WHITE)
+
+        # Reserves
+        swap_ready = g.swap_cd >= g.swap_max_cd
+        swap_keys = "123456789"
+        for r_idx, r in enumerate(self.bg.reserves[i]):
+            key_text = f"{swap_keys[r_idx]}: " if is_player_side and swap_ready else ""
+            self.renderer.draw_text(f"{key_text}{r.name}", x_offset, y_offset, r.color)
+            y_offset += 20
+            if swap_ready:
+                self.render_bar(x_offset, y_offset, bar_length, 15, r.hp, r.max_hp, STATUS_HEALTH_LOW, STATUS_HEALTH_MEDIUM, COLOR_BACKGROUND)
+            else:
+                self.render_bar(x_offset, y_offset, bar_length, 15, g.swap_cd, g.swap_max_cd, STATUS_PROGRESS_DARK, STATUS_PROGRESS_LIGHT, COLOR_BACKGROUND)
+            y_offset += 30
+
+    def render_tactics(self, i, x_offset, y_offset, is_player_side):
+        """Renders the tactics list for a general."""
+        tactic_keys = "ZXCVBNM"
+        g = self.bg.generals[i]
+        self.renderer.draw_text("Tactics:", x_offset, y_offset, UI_TEXT)
         y_offset += 25
+        for s_idx, quote in enumerate(g.tactic_quotes):
+            color = (255, 100, 100) if g.tactics[s_idx] == g.selected_tactic else UI_TEXT
+            key_text = f"{tactic_keys[s_idx]}: " if is_player_side else ""
+            self.renderer.draw_text(f"{key_text}{quote}", x_offset + 10, y_offset, color)
+            y_offset += 20
+        return y_offset
 
-    # Minion Count
-    self.renderer.draw_text(f"{g.minions_alive} {g.minion.name}s", x_offset, y_offset, COLOR_WHITE)
-    y_offset += 25
-    
-    # Tactics
-    y_offset = self.render_tactics(i, x_offset, y_offset)
-    
-    # Reserves
-    swap_ready = g.swap_cd >= g.swap_max_cd
-    swap_keys = "123456789"
-    for r_idx, r in enumerate(self.bg.reserves[i]):
-        if swap_ready:
-            self.renderer.draw_text(f"{swap_keys[r_idx]}: {r.name}", x_offset, y_offset, r.color)
-            y_offset += 15
-            self.render_bar(x_offset, y_offset, bar_length, 15, r.hp, r.max_hp, (0, 150, 0), (150, 0, 0), COLOR_WHITE)
-        else:
-            self.renderer.draw_text(f"Swap CD:", x_offset, y_offset, COLOR_WHITE)
-            y_offset += 15
-            self.render_bar(x_offset, y_offset, bar_length, 15, g.swap_cd, g.swap_max_cd, (0, 100, 200), (50, 50, 50), COLOR_WHITE)
-        y_offset += 25
+    def render_info(self, grid_x, grid_y):
+        """Renders the info bar at the bottom and skill descriptions."""
+        info_x, info_y = INFO_BAR_OFFSET
+        
+        # Clear the info area
+        self.renderer.draw_rect(info_x, info_y - 5, 60 * TILE_SIZE, 60, COLOR_BACKGROUND)  # 60 is GRID_WIDTH
 
+        # Hovered tile entity info
+        if self.bg.is_inside(grid_x, grid_y):
+            entity = self.bg.tiles[(grid_x, grid_y)].entity
+            if entity:
+                if hasattr(entity, "hp"):
+                    text = f"{entity.name.capitalize()}: HP {entity.hp}/{entity.max_hp}, PW {entity.power}"
+                    self.renderer.draw_text(text, info_x, info_y, entity.original_color)
+                else:
+                    self.renderer.draw_text(entity.name.capitalize(), info_x, info_y)
+            
+            # Display coordinates
+            self.renderer.draw_text(f"{grid_x}/{grid_y}", info_x + (60 * TILE_SIZE) - 60, info_y)  # 60 is GRID_WIDTH
 
-def render_tactics(self, i, x_offset, y_offset):
-    tactic_keys = "ZXCVBNM"
-    g = self.bg.generals[i]
-    for s_idx, quote in enumerate(g.tactic_quotes):
-        color = (255, 100, 100) if g.tactics[s_idx] == g.selected_tactic else COLOR_WHITE
-        self.renderer.draw_text(f"{tactic_keys[s_idx]}: {quote}", x_offset, y_offset, color)
-        y_offset += 20
-    return y_offset
+        # Skill description from hovering over side panels
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        panel_index = -1
+        if 0 < mouse_x < PANEL_PIXEL_WIDTH:
+            panel_index = 0
+        elif BATTLEGROUND_OFFSET[0] + (60 * TILE_SIZE) < mouse_x < self.renderer.screen.get_width():  # 60 is GRID_WIDTH
+            panel_index = 1
+        
+        if panel_index != -1:
+            g = self.bg.generals[panel_index]
+            # Approximate Y check for skills area
+            skill_start_y = 65
+            skill_area_height = len(g.skills) * 50
+            if skill_start_y < mouse_y < skill_start_y + skill_area_height:
+                skill_index = (mouse_y - skill_start_y) // 50
+                if 0 <= skill_index < len(g.skills):
+                    skill = g.skills[skill_index]
+                    self.renderer.draw_text(skill.description, info_x, info_y + 20, COLOR_WHITE)
 
+    def render_msgs(self):
+        """Renders the message log."""
+        msg_x, msg_y = MSG_LOG_OFFSET
+        
+        # Clear the message area
+        self.renderer.draw_rect(msg_x, 0, 60 * TILE_SIZE, BATTLEGROUND_OFFSET[1] - 5, COLOR_BACKGROUND)  # 60 is GRID_WIDTH
 
-def render_msgs(self):
-    y = 5 # Small offset from top
-    for (line, color) in self.game_msgs:
-        self.renderer.draw_text(line, (PANEL_WIDTH * TILE_SIZE) + 10, y, color)
-        y += 15
-
+        y = msg_y
+        for (line, color) in self.game_msgs:
+            self.renderer.draw_text(line, msg_x, y, color)
+            y += 15 # Line height
 
 
 from factions import doto

@@ -6,7 +6,7 @@ from faction import *
 from window import *
 import pygame
 
-from config import COLOR_WHITE, COLOR_BLACK, COLOR_BACKGROUND
+from config import COLOR_WHITE, COLOR_BLACK, COLOR_BACKGROUND, WINDOW_WIDTH, PANEL_WIDTH, PANEL_OFFSET_Y, BG_WIDTH, BG_HEIGHT
 
 import re
 
@@ -122,7 +122,7 @@ class Scenario(Window):
 
   def render_panels(self):
     self.render_side_panel(self.side, 0, 0)
-    self.render_side_panel((self.side + 1) % 2, 0, SCREEN_WIDTH - PANEL_WIDTH * 16)
+    self.render_side_panel((self.side + 1) % 2, 0, WINDOW_WIDTH - PANEL_WIDTH * 16)
 
   def render_side_panel(self, i, bar_length, bar_offset_x):
     x_offset = i * (BG_WIDTH + PANEL_WIDTH)

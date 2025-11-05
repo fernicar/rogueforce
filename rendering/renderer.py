@@ -4,7 +4,7 @@ Pygame-based rendering system to replace TCOD
 import pygame
 from config import (
     WINDOW_WIDTH, WINDOW_HEIGHT, FPS,
-    GRID_WIDTH, GRID_HEIGHT, TILE_SIZE,
+    BG_WIDTH, BG_HEIGHT, TILE_SIZE,
     COLOR_BLACK, COLOR_WHITE, COLOR_BACKGROUND, DEBUG
 )
 
@@ -25,48 +25,50 @@ class Renderer:
         self.font = pygame.font.Font(None, 20)  # Default font, size 20
         self.large_font = pygame.font.Font(None, 32)
 
-        # Camera offset for side view battles
-        self.camera_x = 0
-        self.camera_y = 0
-
         if DEBUG:
             print(f"[RENDERER] Initialized {WINDOW_WIDTH}x{WINDOW_HEIGHT} window")
-            print(f"[RENDERER] Grid: {GRID_WIDTH}x{GRID_HEIGHT} tiles")
+            print(f"[RENDERER] Grid: {BG_WIDTH}x{BG_HEIGHT} tiles")
             print(f"[RENDERER] Tile size: {TILE_SIZE}px")
 
     def clear(self, color=COLOR_BACKGROUND):
         """Clear screen with given color"""
         self.screen.fill(color)
 
-    def draw_sprite(self, surface, x, y, centered=True):
+    def draw_sprite(self, surface, pixel_x, pixel_y, centered=True):
         """
-        Draw sprite at grid coordinates
+        Draw sprite at absolute pixel coordinates.
 
         Args:
             surface: pygame.Surface to draw
-            x: Grid X coordinate
-            y: Grid Y coordinate
-            centered: Whether to center sprite on tile
+            pixel_x: Absolute screen X coordinate
+            pixel_y: Absolute screen Y coordinate
+            centered: Whether to center sprite on the coordinate
         """
         if surface is None:
             if DEBUG:
-                # Draw placeholder
+                # Draw placeholder if sprite is missing
                 rect = pygame.Rect(
-                    x * TILE_SIZE - self.camera_x,
-                    y * TILE_SIZE - self.camera_y,
+                    pixel_x,
+                    pixel_y,
                     TILE_SIZE, TILE_SIZE
                 )
+                # Adjust for centering if needed
+                if centered:
+                    rect.center = (pixel_x, pixel_y)
                 pygame.draw.rect(self.screen, (255, 0, 255), rect)
             return
 
-        pixel_x = x * TILE_SIZE - self.camera_x
-        pixel_y = y * TILE_SIZE - self.camera_y
-
+        # The calling code now provides the final pixel coordinates.
+        # We just need to handle centering.
         if centered:
-            pixel_x -= surface.get_width() // 2
-            pixel_y -= surface.get_height() // 2
+            draw_pos = (
+                pixel_x - surface.get_width() // 2,
+                pixel_y - surface.get_height() // 2
+            )
+        else:
+            draw_pos = (pixel_x, pixel_y)
 
-        self.screen.blit(surface, (pixel_x, pixel_y))
+        self.screen.blit(surface, draw_pos)
 
     def draw_text(self, text, x, y, color=COLOR_WHITE, large=False):
         """Draw text at pixel coordinates"""
@@ -96,11 +98,6 @@ class Renderer:
         """Update display and maintain FPS"""
         pygame.display.flip()
         self.clock.tick(FPS)
-
-    def set_camera(self, x, y):
-        """Set camera position (for scrolling/following)"""
-        self.camera_x = x
-        self.camera_y = y
 
     def quit(self):
         """Cleanup Pygame"""

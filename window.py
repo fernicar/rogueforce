@@ -3,34 +3,15 @@ from battleground import Battleground
 from rendering.renderer import Renderer
 from assets.asset_loader import asset_loader
 import pygame
-from config import COLOR_WHITE, COLOR_BACKGROUND, COLOR_BLACK, TILE_SIZE
+from config import (
+    COLOR_WHITE, COLOR_BACKGROUND, COLOR_BLACK, TILE_SIZE, DEBUG,
+    BATTLEGROUND_OFFSET, PANEL_PIXEL_WIDTH, BATTLEGROUND_PIXEL_WIDTH
+)
 
 import socket
 import sys
 import textwrap
 import time
-
-from config import DEBUG
-
-BG_WIDTH = 60
-BG_HEIGHT = 43
-PANEL_WIDTH = 16
-PANEL_HEIGHT = BG_HEIGHT
-INFO_WIDTH = BG_WIDTH
-INFO_HEIGHT = 1
-MSG_WIDTH = BG_WIDTH - 2
-MSG_HEIGHT = 6
-SCREEN_WIDTH = BG_WIDTH + PANEL_WIDTH*2
-SCREEN_HEIGHT = BG_HEIGHT + INFO_HEIGHT + MSG_HEIGHT + 1
-
-BG_OFFSET_X = PANEL_WIDTH
-BG_OFFSET_Y = MSG_HEIGHT + 1
-PANEL_OFFSET_X = 0
-PANEL_OFFSET_Y = BG_OFFSET_Y + 3
-MSG_OFFSET_X = BG_OFFSET_X
-MSG_OFFSET_Y = 1
-INFO_OFFSET_X = PANEL_WIDTH + 1
-INFO_OFFSET_Y = BG_OFFSET_Y + BG_HEIGHT
 
 TURN_LAG = 1
 
@@ -98,14 +79,23 @@ class Window(object):
       self.bg.hover_tiles(self.default_hover_function(grid_x, grid_y), self.default_hover_color)
 
   def get_grid_coords(self, mouse_x, mouse_y):
-      grid_x = (mouse_x - BG_OFFSET_X) // TILE_SIZE
-      grid_y = (mouse_y - BG_OFFSET_Y) // TILE_SIZE
+      """
+      Converts absolute screen coordinates to battleground grid coordinates.
+      """
+      # Subtract the battleground's top-left corner offset
+      relative_x = mouse_x - BATTLEGROUND_OFFSET[0]
+      relative_y = mouse_y - BATTLEGROUND_OFFSET[1]
+      
+      # Convert pixel coordinates to grid coordinates
+      grid_x = relative_x // TILE_SIZE
+      grid_y = relative_y // TILE_SIZE
+      
       return grid_x, grid_y
 
   def message(self, new_msg, color=COLOR_WHITE):
-    new_msg_lines = textwrap.wrap(new_msg, MSG_WIDTH)
+    new_msg_lines = textwrap.wrap(new_msg, 58)  # Approximate MSG_WIDTH
     for line in new_msg_lines:
-      if len(self.game_msgs) == MSG_HEIGHT:
+      if len(self.game_msgs) == 6:  # MSG_HEIGHT
         del self.game_msgs[0]
       self.game_msgs.append((line, color))
 
@@ -191,45 +181,57 @@ class Window(object):
   def process_messages(self, turn):
     return False
 
-  def render_all(self, x, y):
-    self.renderer.clear()
-    
-    # Draw background tiles first
-    for tile in self.bg.tiles.values():
-        if not tile.entity and not tile.effects:
-             self.renderer.draw_text(tile.char, tile.x * TILE_SIZE + BG_OFFSET_X, tile.y * TILE_SIZE + BG_OFFSET_Y, tile.color)
+  def render_all(self, grid_x, grid_y):
+      self.renderer.clear()
+      
+      # --- Draw Battleground ---
+      bg_off_x, bg_off_y = BATTLEGROUND_OFFSET
 
-    # Draw hovered tiles background (so they appear under entities)
-    for tile in self.bg.hovered:
-        rect = (
-            tile.x * TILE_SIZE + BG_OFFSET_X,
-            tile.y * TILE_SIZE + BG_OFFSET_Y,
-            TILE_SIZE, TILE_SIZE
-        )
-        pygame.draw.rect(self.renderer.screen, tile.bg_color, rect)
+      # Draw hovered tile backgrounds first
+      for tile in self.bg.hovered:
+          rect = (
+              bg_off_x + tile.x * TILE_SIZE,
+              bg_off_y + tile.y * TILE_SIZE,
+              TILE_SIZE, TILE_SIZE
+          )
+          pygame.draw.rect(self.renderer.screen, tile.bg_color, rect)
 
-    # Draw entities and effects with priority (KEEP THE EXACT SAME SPRITE RENDERING!)
-    for tile in self.bg.tiles.values():
-        drawable = None
-        if tile.effects:
-            drawable = tile.effects[-1] # Draw top-most effect
-        elif tile.entity:
-            drawable = tile.entity
-        
-        if drawable:
-            if drawable.animation:
-                sprite = drawable.animation.get_current_sprite()
-                self.renderer.draw_sprite(sprite, tile.x, tile.y)  # ← KEEP THIS EXACTLY AS IT IS!
-            else:
-                # Fallback to text rendering
-                char_to_draw = drawable.char if hasattr(drawable, 'char') else '?'
-                self.renderer.draw_text(char_to_draw, tile.x * TILE_SIZE + BG_OFFSET_X, tile.y * TILE_SIZE + BG_OFFSET_Y, drawable.color)
-        elif tile not in self.bg.hovered: # Only redraw empty tiles if not hover-highlighted
-             self.renderer.draw_text(tile.char, tile.x * TILE_SIZE + BG_OFFSET_X, tile.y * TILE_SIZE + BG_OFFSET_Y, tile.color)
+      # Draw tiles, entities, and effects
+      for tile in self.bg.tiles.values():
+          if not self.bg.is_inside(tile.x, tile.y):
+              continue
 
-    self.render_panels()
-    self.render_info(x, y)
-    self.render_msgs()
+          pixel_x = bg_off_x + tile.x * TILE_SIZE
+          pixel_y = bg_off_y + tile.y * TILE_SIZE
+          
+          drawable = None
+          if tile.effects:
+              drawable = tile.effects[-1]
+          elif tile.entity:
+              drawable = tile.entity
+          
+          if drawable:
+              # This is where we preserve your sprite rendering logic, but adapt it
+              # to the corrected coordinate system.
+              if drawable.animation:
+                  sprite = drawable.animation.get_current_sprite()
+                  # We calculate the center of the tile for centered drawing
+                  center_pixel_x = pixel_x + TILE_SIZE // 2
+                  center_pixel_y = pixel_y + TILE_SIZE // 2
+                  self.renderer.draw_sprite(sprite, center_pixel_x, center_pixel_y)
+              else:
+                  # Fallback to text for entities without sprites
+                  char_to_draw = drawable.char if hasattr(drawable, 'char') else '?'
+                  self.renderer.draw_text(char_to_draw, pixel_x, pixel_y, drawable.color)
+          elif not tile in self.bg.hovered:
+              # Draw the floor/wall character if nothing is on the tile
+              self.renderer.draw_text(tile.char, pixel_x, pixel_y, tile.color)
+
+      # --- Draw UI Panels and Text ---
+      # These methods will be fully implemented in the next phase.
+      self.render_panels()
+      self.render_info(grid_x, grid_y)
+      self.render_msgs()
 
   def render_panels(self):
     pass
@@ -254,9 +256,9 @@ class Window(object):
     self.renderer.draw_text(text, x + 5, y + 2, text_color)
 
   def render_msgs(self):
-    y = MSG_OFFSET_Y
+    y = 5  # MSG_LOG_OFFSET[1]
     for (line, color) in self.game_msgs:
-        self.renderer.draw_text(line, MSG_OFFSET_X, y, color)
+        self.renderer.draw_text(line, BATTLEGROUND_OFFSET[0], y, color)
         y += 15 # Line height
 
   def update_all(self):
