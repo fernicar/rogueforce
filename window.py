@@ -114,57 +114,78 @@ class Window(object):
       sys.stdout.write("DEBUG: Entering main game loop\n")
       
     turn = 0
-    while not self.game_over:
-      if turn > 0:
-        if self.network:
-          received = self.network.recv()
-        else:
-          ai = self.ai_action(turn)
-          if ai:
-            received = str(turn) + "#" + ai
-          else:
-            received = "D"
-        received_str = str(received) if received else ""
-        split = received_str.split("#")
-        if len(split) == 2:
-          self.messages[not self.side][int(split[0])] = str(split[1])
+    # The old code used a fixed time per turn. We'll use pygame's clock for a more stable loop.
+    # The game logic will still advance one 'turn' per frame for simplicity.
 
+    while not self.game_over:
+      # --- Input Handling ---
+      # We process all events at the start of the frame.
+      s = None # Action string
       for event in pygame.event.get():
         if event.type == pygame.QUIT:
           self.game_over = True
-        elif event.type == pygame.KEYDOWN:
+          continue # Skip the rest of the loop for this frame
+        if event.type == pygame.KEYDOWN:
           if event.key == pygame.K_ESCAPE:
             self.game_over = True
+            continue
 
-      keys = pygame.key.get_pressed()
-      mouse = pygame.mouse.get_pressed()
-      mouse_x, mouse_y = pygame.mouse.get_pos()
-      grid_x, grid_y = self.get_grid_coords(mouse_x, mouse_y)
-      s = self.check_input(keys, mouse, grid_x, grid_y)
+      # Get mouse state *after* processing events
+      mouse_buttons = pygame.mouse.get_pressed()
+      mouse_pos = pygame.mouse.get_pos()
+      grid_x, grid_y = self.get_grid_coords(mouse_pos[0], mouse_pos[1])
+
+      # Get keyboard state for check_input. We pass the event queue for single-press actions.
+      keys_pressed = pygame.key.get_pressed()
+      s = self.check_input(keys_pressed, mouse_buttons, grid_x, grid_y)
       if s is not None:
         self.messages[self.side][turn] = s
 
+      # --- Network and Message Processing ---
+      # This logic remains largely the same.
       if self.network:
+        # Send our action for this turn
         if turn in self.messages[self.side]:
           self.network.send(str(turn) + "#"  + self.messages[self.side][turn])
         else:
-          self.network.send("D")
+          self.network.send("D") # Send dummy message to keep sync
+        
+        # Receive opponent's action
+        received = self.network.recv()
+      else:
+        # Generate AI action if no network
+        ai = self.ai_action(turn)
+        received = str(turn) + "#" + ai if ai else "D"
+      
+      received_str = str(received) if received else ""
+      split = received_str.split("#")
+      if len(split) == 2 and split[0].isdigit():
+        other_side = (self.side + 1) % 2
+        self.messages[other_side][int(split[0])] = str(split[1])
+
+      # --- Game State Update ---
+      # Process messages from the turn before the lag period.
       self.process_messages(turn - TURN_LAG)
       self.update_all()
       winner = self.check_winner()
-      if (turn % 100) == 0: self.clean_all()
 
-      self.do_hover(mouse_x, mouse_y)
-      turn +=1
-      
-      if DEBUG and (turn % 10 == 0):
-        sys.stdout.write(f"DEBUG: Turn {turn} completed\n")
-        
+      if (turn % 100) == 0:
+        self.clean_all()
+
+      # --- Rendering ---
+      self.do_hover(mouse_pos[0], mouse_pos[1])
       self.render_all(grid_x, grid_y)
-      self.renderer.update()
+      self.renderer.update() # This handles pygame.display.flip() and clock.tick()
+
+      # --- Advance Turn ---
+      turn += 1
+      if DEBUG and (turn % 50 == 0):
+        sys.stdout.write(f"DEBUG: Turn {turn} completed\n")
 
     if DEBUG:
       sys.stdout.write("DEBUG: Game loop ended\n")
+    asset_loader.report_missing_assets() # Report any missing sprites at the end.
+    self.renderer.quit()
     return winner
 
   def process_messages(self, turn):
@@ -178,7 +199,16 @@ class Window(object):
         if not tile.entity and not tile.effects:
              self.renderer.draw_text(tile.char, tile.x * TILE_SIZE + BG_OFFSET_X, tile.y * TILE_SIZE + BG_OFFSET_Y, tile.color)
 
-    # Draw entities and effects with priority
+    # Draw hovered tiles background (so they appear under entities)
+    for tile in self.bg.hovered:
+        rect = (
+            tile.x * TILE_SIZE + BG_OFFSET_X,
+            tile.y * TILE_SIZE + BG_OFFSET_Y,
+            TILE_SIZE, TILE_SIZE
+        )
+        pygame.draw.rect(self.renderer.screen, tile.bg_color, rect)
+
+    # Draw entities and effects with priority (KEEP THE EXACT SAME SPRITE RENDERING!)
     for tile in self.bg.tiles.values():
         drawable = None
         if tile.effects:
@@ -189,12 +219,12 @@ class Window(object):
         if drawable:
             if drawable.animation:
                 sprite = drawable.animation.get_current_sprite()
-                self.renderer.draw_sprite(sprite, tile.x, tile.y)
+                self.renderer.draw_sprite(sprite, tile.x, tile.y)  # ← KEEP THIS EXACTLY AS IT IS!
             else:
                 # Fallback to text rendering
                 char_to_draw = drawable.char if hasattr(drawable, 'char') else '?'
                 self.renderer.draw_text(char_to_draw, tile.x * TILE_SIZE + BG_OFFSET_X, tile.y * TILE_SIZE + BG_OFFSET_Y, drawable.color)
-        elif not drawable: # Redraw empty tile with hover color
+        elif tile not in self.bg.hovered: # Only redraw empty tiles if not hover-highlighted
              self.renderer.draw_text(tile.char, tile.x * TILE_SIZE + BG_OFFSET_X, tile.y * TILE_SIZE + BG_OFFSET_Y, tile.color)
 
     self.render_panels()

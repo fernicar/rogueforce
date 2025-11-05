@@ -74,21 +74,25 @@ class Minion(Entity):
     
   def update(self):
     if not self.alive: return
-    super(Minion, self).update()
+    # First, let the parent Entity class handle status effects and animation
+    super(Minion, self).update() 
+    
+    # Now, restore the core action logic
     if self.next_action <= 0:
       self.reset_action()
       if not self.try_attack():
         self.follow_tactic()
-    else: self.next_action -= 1
+    else: 
+      self.next_action -= 1
 
   def update_color(self):
     # We change the color to indicate that the minion is wounded.
     # More red -> closer to death (health-based dynamic coloring)
     if self.max_hp > 0:
         c = int(255 * (float(self.hp) / self.max_hp))
-        self.color = (255, c, c)
+        self.color = (255, c, c)  # Changed from libtcod.Color to pygame tuple
     else:
-        self.color = (255, 0, 0)
+        self.color = (255, 0, 0)  # Changed from libtcod.Color to pygame tuple
 
 class BigMinion(BigEntity, Minion):
   def __init__(self, battleground, side, x=-1, y=-1, name="Giant", chars=['G']*4, colors=[COLOR_WHITE]*4):

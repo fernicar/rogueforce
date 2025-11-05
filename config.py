@@ -6,8 +6,8 @@ Global configuration for Rogue Force
 DEBUG = True  # Set to False for production
 
 # Display settings
-WINDOW_WIDTH = 1024
-WINDOW_HEIGHT = 768
+WINDOW_WIDTH = 1280
+WINDOW_HEIGHT = 1024
 FPS = 60
 
 # Grid settings (logical game units)
