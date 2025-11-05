@@ -470,7 +470,9 @@ class TestPhase1Setup(unittest.TestCase):
             print(f"\nNext steps:")
             print(f"1. Review the implementation")
             print(f"2. Run tests: python -m pytest test/test_migration_phase1.py")
-            print(f"3. Proceed to Phase 2 planning\n")
+            print(f"3. Run tests: `timeout 5s python battle.py 0`")
+            print(f"4. Run tests: `timeout 5s python scenario.py`")
+            print(f"5. Proceed to Phase 2 planning\n")
             return 0
         else:
             print("\n" + "⚠️ " * 35)
