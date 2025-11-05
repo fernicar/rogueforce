@@ -13,8 +13,9 @@ class Faction(object):
 
 class Doto(Faction):
   def __init__(self, battleground, side):
-    generals = [doto.Bloodrotter(battlegound, side),
+    generals = [doto.Bloodrotter(battleground, side),
                 doto.Ox(battleground, side),
+                doto.Pock(battleground, side),
                 doto.Rubock(battleground, side)]
     super(Doto, self).__init__(battleground, side, generals, "Doto")
 
@@ -25,20 +26,19 @@ class Mechanics(Faction):
 
 class Oracles(Faction):
   def __init__(self, battleground, side):
-    generals = []
-    generals.append(oracles.Gemekaa(battleground, side))
-    generals.append(general.General(battleground, side))
-    generals.append(general.Emperor(battleground, side))
+    generals = [oracles.Gemekaa(battleground, side),
+                doto.Ox(battleground, side),
+                doto.Pock(battleground, side)]
     super(Oracles, self).__init__(battleground, side, generals, "Oracles")
 
 class Saviours(Faction):
   def __init__(self, battleground, side):
-    generals = []
-    generals.append(saviours.Ares(battleground, side))
-    generals.append(general.General(battleground, side))
-    generals.append(general.Emperor(battleground, side))
+    generals = [saviours.Ares(battleground, side),
+                doto.Bloodrotter(battleground, side),
+                doto.Rubock(battleground, side)]
+    super(Saviours, self).__init__(battleground, side, generals, "Saviours")
 
 class Wizerds(Faction):
   def __init__(self, battleground, side):
-    generals = [wizerds.Flappy(battleground, side)]
+    generals = [wizerds.Starcall(battleground, side)]
     super(Wizerds, self).__init__(battleground, side, generals, "Wizerds")

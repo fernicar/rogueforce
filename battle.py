@@ -109,7 +109,7 @@ class BattleWindow(Window):
           self.bg.generals[i].command_tactic(int(m[6]))
         elif m.startswith("swap"):
           if self.bg.generals[i].swap(int(m[4])):
-            self.render_side_panel_clear(i)
+            self.render_side_panel(i, 0, 0)
         else:
           match = FLAG_PATTERN.match(m)
           if match:
@@ -167,8 +167,9 @@ class BattleWindow(Window):
 
   def render_tactics(self, i, x_offset, line):
     COLOR_RED = (255, 0, 0)
-    for s in range(0, len(self.bg.generals[i].tactics)):
-      text = f"{pygame.key.name(self.keymap_tactics[s]).upper()}: {self.bg.generals[i].tactic_quotes[s]}"
+    tactics_count = min(len(self.bg.generals[i].tactics), len(self.keymap_tactics))
+    for s in range(tactics_count):
+      text = f"{pygame.key.name(ord(self.keymap_tactics[s])).upper()}: {self.bg.generals[i].tactic_quotes[s]}"
       color = COLOR_RED if self.bg.generals[i].tactics[s] == self.bg.generals[i].selected_tactic else COLOR_WHITE
       self.renderer.draw_text(text, x_offset, line * 20, color)
       line += 2

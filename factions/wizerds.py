@@ -11,6 +11,7 @@ import random
 class Starcall(General):
   def __init__(self, battleground, side, x=-1, y=-1, name="Starcall", color=concepts.FACTION_WIZERDS):
     super(Starcall, self).__init__(battleground, side, x, y, name, color)
+    self.character_name = "starcall"  # Lowercase to match sprite directory
     self.rand = random.Random()
    
   def initialize_skills(self):

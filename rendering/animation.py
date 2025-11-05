@@ -10,7 +10,7 @@ class Animation:
     Idle sprite is in the middle, animates to extremes and back
     """
 
-    def __init__(self, sprites, fps=10):
+    def __init__(self, sprites, fps=2):
         """
         Args:
             sprites: Dict with keys like 'base_idle', 'breathe_1', 'breathe_2', etc.
@@ -28,10 +28,10 @@ class Animation:
 
         # Define animation sequences (ping-pong)
         self.sequences = {
-            'idle': ['base_idle', 'breathe_1', 'breathe_2', 'breathe_1', 'base_idle'],
-            'walk': ['base_idle', 'walk_1', 'walk_2', 'walk_1', 'base_idle'],
-            'attack': ['base_idle', 'attack_1', 'attack_2', 'attack_1', 'base_idle'],
-            'flinch': ['base_idle', 'flinch_1', 'flinch_2', 'flinch_1', 'base_idle']
+            'idle': ['breathe_1', 'base_idle', 'breathe_2'],
+            'walk': ['walk_2', 'base_idle', 'walk_1'],
+            'attack': ['attack_1', 'attack_2'],
+            'flinch': ['flinch_1', 'flinch_2']
         }
 
     def update(self):

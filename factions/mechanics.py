@@ -10,6 +10,7 @@ from config import COLOR_WHITE
 class Flappy(General):
   def __init__(self, battleground, side, x=-1, y=-1, name="Flappy", color=COLOR_WHITE):
     super(Flappy, self).__init__(battleground, side, x, y, name, color)
+    self.character_name = "flappy"  # Lowercase to match sprite directory
     self.death_quote = "I'll be back, like a boo... me..."
     self.minion = Minion(self.bg, self.side, name="goblin")
 

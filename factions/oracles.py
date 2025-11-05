@@ -21,6 +21,7 @@ class Slave(Minion):
 class Gemekaa(General):
   def __init__(self, battleground, side, x=-1, y=-1, name="Gemekaa", color=COLOR_WHITE):
     super(Gemekaa, self).__init__(battleground, side, x, y, name, color)
+    self.character_name = "gemekaa"  # Lowercase to match sprite directory
     self.max_hp = 70
     self.death_quote = "I did not foresee this..."
     self.formation = formation.InvertedWedge(self, 3)

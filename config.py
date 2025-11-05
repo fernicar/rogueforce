@@ -6,8 +6,8 @@ Global configuration for Rogue Force
 DEBUG = True  # Set to False for production
 
 # Display settings
-WINDOW_WIDTH = 800
-WINDOW_HEIGHT = 600
+WINDOW_WIDTH = 1024
+WINDOW_HEIGHT = 768
 FPS = 60
 
 # Grid settings (logical game units)
@@ -22,8 +22,8 @@ SOUND_PATH = f'{ASSET_ROOT}/sound'
 MUSIC_PATH = f'{ASSET_ROOT}/music'
 
 # Sprite scaling
-GENERAL_SCALE = 1.0
-MINION_SCALE = 0.8
+GENERAL_SCALE = 0.04
+MINION_SCALE = 0.03
 
 # Colors (RGB tuples)
 COLOR_BLACK = (0, 0, 0)

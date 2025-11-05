@@ -17,6 +17,7 @@ FACTION_DOTO_PURE = (128, 128, 128)
 class Bloodrotter(General):
   def __init__(self, battleground, side, x=-1, y=-1, name="Bloodrotter", color=FACTION_DOTO_DARK):
     super(Bloodrotter, self).__init__(battleground, side, x, y, name, color)
+    self.character_name = "bloodrotter"  # Lowercase to match sprite directory
     self.max_hp = 250
     self.power = 11
     self.thirst_charges = 0
@@ -57,6 +58,7 @@ class Bloodrotter(General):
 class Ox(General):
   def __init__(self, battleground, side, x=-1, y=-1, name="Ox", color=FACTION_DOTO_MEDIUM):
     super(Ox, self).__init__(battleground, side, x, y, name, color)
+    self.character_name = "ox"  # Lowercase to match sprite directory
     self.rand = random.Random()
     self.max_hp = 400
     self.helix_index = 2
@@ -101,9 +103,10 @@ class Ox(General):
 class Pock(General):
   def __init__(self, battleground, side, x=-1, y=-1, name="Pock", color=FACTION_DOTO_LIGHT):
     super(Pock, self).__init__(battleground, side, x, y, name, color)
+    self.character_name = "pock"  # Lowercase to match sprite directory
     self.max_hp = 250
     self.armor["physical"] = 1
-    self.orb = Orb(self.bg, self.side, character_name='o', color=self.color)
+    self.orb = Orb(self.bg, self.side, character_name='pock', color=self.color)
     self.orb_index = 0
     self.jaunt_index = 4
 
@@ -143,6 +146,7 @@ class Pock(General):
 class Rubock(General):
   def __init__(self, battleground, side, x=-1, y=-1, name="Rubock", color=FACTION_DOTO_PURE):
     super(Rubock, self).__init__(battleground, side, x, y, name, color)
+    self.character_name = "rubock"  # Lowercase to match sprite directory
     self.copied_skill = 2
     self.armor["physical"] = 1
 

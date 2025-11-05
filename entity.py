@@ -27,12 +27,17 @@ class Entity(object):
     self.attack_type = "physical"
     self.kills = 0
     self.owner = None
+    self.animation = None  # Defer sprite loading until pygame is initialized
 
-    if self.character_name:
-        sprites = asset_loader.get_character_sprites(self.character_name)
-        self.animation = Animation(sprites)
-    else:
-        self.animation = None
+  def load_sprites(self):
+    """Load sprites after pygame display is initialized"""
+    if self.character_name and not self.animation:
+        try:
+            sprites = asset_loader.get_character_sprites(self.character_name)
+            self.animation = Animation(sprites)
+        except Exception as e:
+            print(f"[SPRITE WARNING] Failed to load sprites for {self.character_name}: {e}")
+            self.animation = None
 
   def can_be_attacked(self):
     return False

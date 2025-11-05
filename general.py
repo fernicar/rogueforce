@@ -19,7 +19,7 @@ class General(Minion):
     self.death_quote = "..."
     self.flag = None
     self.formation = Rows(self)
-    self.minion = Minion(self.bg, self.side, character_name='minion_b' if side else 'minion_d')
+    self.minion = Minion(self.bg, self.side, character_name=name)
     self.skills = []
     self.starting_minions = 101
     self.tactics = [tactic.stop, tactic.forward, tactic.backward, tactic.go_sides, tactic.go_center, tactic.attack_general, tactic.defend_general]
@@ -63,7 +63,7 @@ class General(Minion):
         return
       self.flag.dissapear()
     if self.bg.is_inside(x, y):
-      self.flag = effect.Blinking(self.bg, self.side, x, y, 'q', self.original_color)
+      self.flag = effect.Blinking(self.bg, self.side, x, y, 'pock', self.original_color)
     else:
       self.flag = None
 

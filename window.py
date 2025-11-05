@@ -53,6 +53,11 @@ class Window(object):
 
     self.renderer = Renderer()
 
+    # Load sprites after pygame display is initialized
+    if DEBUG:
+      sys.stdout.write("DEBUG: Loading sprites for all entities\n")
+    self.load_all_sprites()
+
     self.messages = [{}, {}]
 
     self.game_msgs = []
@@ -202,6 +207,37 @@ class Window(object):
       e.update()
     for m in self.bg.minions:
       m.update()
+
+  def load_all_sprites(self):
+    """Load sprites for all entities after pygame display is initialized"""
+    # Load sprites for generals
+    for g in self.bg.generals:
+      if hasattr(g, 'load_sprites'):
+        g.load_sprites()
+    
+    # Load sprites for reserves
+    for reserves in self.bg.reserves:
+      for g in reserves:
+        if hasattr(g, 'load_sprites'):
+          g.load_sprites()
+    
+    # Load sprites for minions
+    for m in self.bg.minions:
+      if hasattr(m, 'load_sprites'):
+        m.load_sprites()
+    
+    # Load sprites for effects
+    for e in self.bg.effects:
+      if hasattr(e, 'load_sprites'):
+        e.load_sprites()
+    
+    # Load sprites for entities on tiles
+    for tile in self.bg.tiles.values():
+      if tile.entity and hasattr(tile.entity, 'load_sprites'):
+        tile.entity.load_sprites()
+        # Also load sprites for the entity's minion if it has one
+        if hasattr(tile.entity, 'minion') and tile.entity.minion and hasattr(tile.entity.minion, 'load_sprites'):
+          tile.entity.minion.load_sprites()
 
 class Network(object):
   def __init__(self, host, port):
