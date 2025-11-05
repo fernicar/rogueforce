@@ -366,11 +366,59 @@ class TestPhase1Setup(unittest.TestCase):
             
             try:
                 with open(filepath, 'r', encoding='utf-8') as f:
-                    content = f.read()
+                    lines = f.readlines()
                 
-                if 'import libtcod' in content or 'from libtcod' in content or 'import tcod' in content:
+                # Only check actual import statements (not comments, docstrings, or examples)
+                import_lines = []
+                in_docstring = False
+                docstring_delimiter = None
+                
+                for line_num, line in enumerate(lines, 1):
+                    stripped = line.strip()
+                    
+                    # Skip empty lines
+                    if not stripped:
+                        continue
+                    
+                    # Track docstrings (triple quotes)
+                    if '"""' in stripped or "'''" in stripped:
+                        if '"""' in stripped:
+                            if not in_docstring:
+                                in_docstring = True
+                                docstring_delimiter = '"""'
+                            elif docstring_delimiter == '"""':
+                                in_docstring = False
+                                docstring_delimiter = None
+                        elif "'''" in stripped:
+                            if not in_docstring:
+                                in_docstring = True
+                                docstring_delimiter = "'''"
+                            elif docstring_delimiter == "'''":
+                                in_docstring = False
+                                docstring_delimiter = None
+                        continue
+                    
+                    # Skip lines in docstrings
+                    if in_docstring:
+                        continue
+                    
+                    # Skip comment-only lines
+                    if stripped.startswith('#'):
+                        continue
+                    
+                    # Check if line contains actual TCOD import
+                    # Only flag if it's an import statement, not a comment or example
+                    if ('import libtcod' in stripped or 
+                        'from libtcod' in stripped or 
+                        ('import tcod' in stripped and 'tcodpy' not in stripped) or
+                        ('from tcod' in stripped and 'tcodpy' not in stripped)):
+                        import_lines.append((line_num, line.strip()))
+                
+                if import_lines:
                     tcod_imports_found.append(filepath)
                     print(f"✗ {filepath} - Contains tcod imports")
+                    for line_num, line in import_lines:
+                        print(f"   Line {line_num}: {line}")
                 else:
                     print(f"✓ {filepath} - No tcod imports")
             except Exception as e:
