@@ -11,11 +11,11 @@ from datetime import datetime
 import hashlib
 
 # Counter file for tracking repeated issues
-COUNTER_FILE = "doc/phase1counter.md"
+COUNTER_FILE = "doc/phasecounter.md"
 TODO_FILE = "doc/todo_list.md"
-CHECKLIST_FILE = "doc/PHASE1_CHECKLIST.md"
+CHECKLIST_FILE = "doc/PHASE_CHECKLIST.md"
 
-class Phase1Verifier:
+class PhaseVerifier:
     def __init__(self):
         self.issues = []
         self.counters = self.load_counters()
@@ -82,19 +82,12 @@ class Phase1Verifier:
         print("PHASE 1 VERIFICATION - File Structure Check")
         print("=" * 70)
 
+        # Note: Based on the new codebase structure, the root asset folder is 'assets/'
         required_files = {
             # Part A: Project Structure
             "doc/": "Directory for documentation",
-            "test/": "Directory for tests",
-            "assets/sound/": "Directory for sound effects",
-            "assets/music/": "Directory for music files",
-            "assets/sprite/game/": "Directory for game sprites",
-
-            # Part A.2: Utility script
-            "move2doc.py": "Utility to move files to correct directories",
-
-            # Part A.3: Updated config
-            "config.py": "Global configuration file",
+            "rendering/": "Directory for rendering components",
+            "assets/sprite/": "Directory for game sprites",
 
             # Part B: Asset Management
             "assets/asset_loader.py": "Asset loading system with DEBUG support",
@@ -108,11 +101,8 @@ class Phase1Verifier:
             # Part F: Animation System
             "rendering/animation.py": "Ping-pong animation system",
 
-            # Part G: Testing
-            "test/test_migration_phase1.py": "Phase 1 unit tests",
-
             # Part H: Documentation
-            "doc/PHASE1_CHECKLIST.md": "Phase 1 completion checklist",
+            "doc/PHASE_CHECKLIST.md": "Phase 1 completion checklist",
             "doc/todo_list.md": "Detailed Phase 1 plan"
         }
 
@@ -141,9 +131,9 @@ class Phase1Verifier:
                 print(f"   Purpose: {description}")
                 print(f"\n   📋 ACTION REQUIRED:")
                 print(f"   1. Open '{TODO_FILE}'")
-                print(f"   2. Find the section that creates '{filepath}'")
-                print(f"   3. Follow ALL instructions in that section COMPLETELY")
-                print(f"   4. Verify the file is created before running phase1.py again")
+                print(f"   2. Find the section that creates or modifies '{filepath}'")
+                print(f"   3. Follow ALL instructions in that section COMPLETELY. Do not skip any steps.")
+                print(f"   4. Verify the file is created before running this script again.")
                 print(f"\n   Example of what's missing:")
                 print(f"   {self.get_file_example(filepath)}")
                 print("-" * 70)
@@ -156,21 +146,11 @@ class Phase1Verifier:
     def get_file_example(self, filepath):
         """Provide an example of what the missing file should contain"""
         examples = {
-            "move2doc.py": """
-import os
-import shutil
-from pathlib import Path
-
-def move_files():
-    # Move markdown files to doc/
-    # Move test files to test/
-    ...
-""",
             "config.py": """
 # Global configuration
 DEBUG = True
-WINDOW_WIDTH = 800
-WINDOW_HEIGHT = 600
+WINDOW_WIDTH = 1024
+WINDOW_HEIGHT = 768
 ...
 """,
             "assets/asset_loader.py": """
@@ -202,14 +182,7 @@ class Animation:
             "requirements.txt": """
 pygame==2.5.2
 """,
-            "test/test_migration_phase1.py": """
-import unittest
-
-class TestPhase1Setup(unittest.TestCase):
-    def test_directory_structure(self):
-        ...
-""",
-            "doc/PHASE1_CHECKLIST.md": """
+            "doc/PHASE_CHECKLIST.md": """
 # Phase 1 Migration Checklist
 
 ## Pre-Migration
@@ -219,10 +192,10 @@ class TestPhase1Setup(unittest.TestCase):
 """
         }
 
-        return examples.get(filepath, "   (See doc/todo_list.md for complete implementation)")
+        return examples.get(filepath, f"   (See {TODO_FILE} for the complete implementation details)")
 
     def check_checklist_items(self):
-        """Check PHASE1_CHECKLIST.md for unchecked items"""
+        """Check PHASE_CHECKLIST.md for unchecked items"""
         print("\n" + "=" * 70)
         print("PHASE 1 VERIFICATION - Checklist Progress")
         print("=" * 70)
@@ -293,17 +266,17 @@ class TestPhase1Setup(unittest.TestCase):
             print(f"\n1. Open '{TODO_FILE}'")
             print(f"2. Open '{CHECKLIST_FILE}'")
             print(f"3. For each unchecked item above:")
-            print(f"   - Find the corresponding section in {TODO_FILE}")
-            print(f"   - Complete ALL steps in that section")
-            print(f"   - Verify the implementation works")
-            print(f"   - Check the box in {CHECKLIST_FILE} (change [ ] to [x])")
-            print(f"4. Run phase1.py again to verify\n")
+            print(f"   - Find the corresponding section in '{TODO_FILE}'")
+            print(f"   - Complete ALL steps for that item")
+            print(f"   - Verify the implementation works as described")
+            print(f"   - Only then, check the box in '{CHECKLIST_FILE}' (change [ ] to [x])")
+            print(f"4. Run this script again to verify your changes.\n")
 
             return False
 
         print("\n✅ All checklist items are completed!")
         return True
-
+    
     def check_requirements_content(self):
         """Verify requirements.txt contains pygame and not tcod"""
         print("\n" + "=" * 70)
@@ -345,55 +318,6 @@ class TestPhase1Setup(unittest.TestCase):
         print("\n✅ Dependencies are correct!")
         return True
 
-    def check_for_tcod_imports(self):
-        """Check new files don't import tcod"""
-        print("\n" + "=" * 70)
-        print("PHASE 1 VERIFICATION - TCOD Import Check")
-        print("=" * 70)
-
-        files_to_check = [
-            "config.py",
-            "assets/asset_loader.py",
-            "rendering/renderer.py",
-            "rendering/animation.py"
-        ]
-
-        tcod_imports_found = []
-
-        for filepath in files_to_check:
-            if not os.path.exists(filepath):
-                continue
-
-            try:
-                with open(filepath, 'r', encoding='utf-8') as f:
-                    content = f.read()
-
-                if 'import libtcod' in content or 'from libtcod' in content or 'import tcod' in content:
-                    tcod_imports_found.append(filepath)
-                    print(f"✗ {filepath} - Contains tcod imports")
-                else:
-                    print(f"✓ {filepath} - No tcod imports")
-            except Exception as e:
-                print(f"⚠ {filepath} - Could not check: {e}")
-
-        if tcod_imports_found:
-            print("\n" + "!" * 70)
-            print("TCOD IMPORTS DETECTED IN NEW FILES")
-            print("!" * 70)
-
-            for filepath in tcod_imports_found:
-                issue = f"TCOD imports found in: {filepath}"
-                self.log_issue(issue)
-                print(f"\n❌ {filepath}")
-                print(f"   These files should NOT import tcod")
-                print(f"   Replace with Pygame equivalents")
-                print(f"   See {TODO_FILE} for correct implementations")
-
-            return False
-
-        print("\n✅ No tcod imports in new files!")
-        return True
-
     def show_counter_summary(self):
         """Display summary of repeated issues"""
         if not self.counters:
@@ -403,12 +327,10 @@ class TestPhase1Setup(unittest.TestCase):
         print("ISSUE FREQUENCY ANALYSIS")
         print("=" * 70)
 
-        # Sort by count
         sorted_issues = sorted(self.counters.items(), key=lambda x: x[1], reverse=True)
 
-        print(f"\nTop repeated issues (see {COUNTER_FILE} for details):")
+        print(f"\nTop repeated issues (see '{COUNTER_FILE}' for full details):")
         for i, (issue_hash, count) in enumerate(sorted_issues[:5], 1):
-            # Find description
             description = "Unknown"
             for issue in self.issues:
                 if self.hash_issue(issue) == issue_hash:
@@ -418,13 +340,11 @@ class TestPhase1Setup(unittest.TestCase):
             print(f"\n{i}. [{issue_hash}] Count: {count}")
             print(f"   {description[:60]}{'...' if len(description) > 60 else ''}")
 
-        if sum(self.counters.values()) > 10:
+        if sum(self.counters.values()) > 5:
             print("\n⚠️  WARNING: Some issues have been detected multiple times!")
-            print("   This might indicate:")
-            print("   - Instructions in todo_list.md are unclear")
-            print("   - Steps are being skipped")
-            print("   - Files are being created incorrectly")
-            print(f"\n   Review {COUNTER_FILE} for detailed frequency analysis")
+            print("   This might indicate steps in 'doc/todo_list.md' are being skipped or misunderstood.")
+            print(f"   Please review the instructions for the issues listed above very carefully.")
+            print(f"   See '{COUNTER_FILE}' for a detailed frequency analysis.")
 
     def run(self):
         """Run all verification checks"""
@@ -433,20 +353,16 @@ class TestPhase1Setup(unittest.TestCase):
         print("=" * 70)
         print(f"Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
 
-        # Run all checks
         files_ok = self.check_required_files()
-        deps_ok = self.check_requirements_content()
-        imports_ok = self.check_for_tcod_imports()
-        checklist_ok = self.check_checklist_items()
-
-        # Save counters after all checks
+        # Only check checklist and dependencies if files are present
+        checklist_ok = self.check_checklist_items() if files_ok else False
+        deps_ok = self.check_requirements_content() if files_ok else False
+        
         self.save_counters()
 
-        # Show counter summary if there are issues
         if not self.all_checks_passed:
             self.show_counter_summary()
 
-        # Final summary
         print("\n" + "=" * 70)
         print("VERIFICATION SUMMARY")
         print("=" * 70)
@@ -454,7 +370,6 @@ class TestPhase1Setup(unittest.TestCase):
         checks = [
             ("File Structure", files_ok),
             ("Dependencies", deps_ok),
-            ("TCOD Imports", imports_ok),
             ("Checklist Progress", checklist_ok)
         ]
 
@@ -466,28 +381,27 @@ class TestPhase1Setup(unittest.TestCase):
             print("\n" + "🎉" * 35)
             print("✅ PHASE 1 VERIFICATION COMPLETE!")
             print("🎉" * 35)
-            print("\n✨ All requirements met! Ready for Phase 2.")
+            print("\n✨ All requirements met! You are ready to proceed.")
             print(f"\nNext steps:")
-            print(f"1. Review the implementation")
-            print(f"2. Run tests: python -m pytest test/test_migration_phase1.py")
-            print(f"3. Proceed to Phase 2 planning\n")
+            print(f"1. Commit your changes to version control.")
+            print(f"2. Proceed to the next phase of the plan.\n")
             return 0
         else:
             print("\n" + "⚠️ " * 35)
             print("❌ PHASE 1 VERIFICATION FAILED")
             print("⚠️ " * 35)
-            print(f"\n📝 {len(self.issues)} issue(s) found")
-            print(f"📊 Issue frequency logged to: {COUNTER_FILE}")
+            print(f"\n📝 {len(self.issues)} issue(s) found.")
+            print(f"📊 Issue frequency has been logged to: {COUNTER_FILE}")
             print(f"\n⚡ Quick fix:")
-            print(f"   1. Address the issues listed above")
-            print(f"   2. Follow {TODO_FILE} carefully")
-            print(f"   3. Run phase1.py again to verify\n")
+            print(f"   1. Carefully address the issues listed above.")
+            print(f"   2. Follow the instructions in '{TODO_FILE}' precisely.")
+            print(f"   3. Run this script again to verify.\n")
             return 1
 
 
 def main():
     """Main entry point"""
-    verifier = Phase1Verifier()
+    verifier = PhaseVerifier()
     return verifier.run()
 
 

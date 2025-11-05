@@ -8,8 +8,8 @@ import tactic
 from collections import defaultdict
 
 class Minion(Entity):
-  def __init__(self, battleground, side, x=-1, y=-1, name="minion", character_name=None, color=COLOR_WHITE):
-    super(Minion, self).__init__(battleground, side, x, y, name, character_name, color)
+  def __init__(self, battleground, side, x=-1, y=-1, name="minion", character_name=None, color=COLOR_WHITE, sprite_name=None):
+    super(Minion, self).__init__(battleground, side, x, y, 'm' if not sprite_name else sprite_name, character_name if character_name else name, color) # Default char is 'm'
     self.name = name
     self.max_hp = 30
     self.hp = 30
@@ -82,8 +82,13 @@ class Minion(Entity):
     else: self.next_action -= 1
 
   def update_color(self):
-    c = int(255*(float(self.hp)/self.max_hp))
-    self.color = (255, c, c)
+    # We change the color to indicate that the minion is wounded.
+    # More red -> closer to death (health-based dynamic coloring)
+    if self.max_hp > 0:
+        c = int(255 * (float(self.hp) / self.max_hp))
+        self.color = (255, c, c)
+    else:
+        self.color = (255, 0, 0)
 
 class BigMinion(BigEntity, Minion):
   def __init__(self, battleground, side, x=-1, y=-1, name="Giant", chars=['G']*4, colors=[COLOR_WHITE]*4):

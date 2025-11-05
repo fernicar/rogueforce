@@ -13,13 +13,13 @@ import math
 
 class General(Minion):
   def __init__(self, battleground, side, x=-1, y=-1, name="General", color=COLOR_WHITE):
-    super(General, self).__init__(battleground, side, x, y, name, name, color)
+    super(General, self).__init__(battleground, side, x, y, name[0], name, color) # Use name[0] as sprite_name/char
     self.max_hp = 300
     self.cost = 250
     self.death_quote = "..."
     self.flag = None
     self.formation = Rows(self)
-    self.minion = Minion(self.bg, self.side, character_name=name)
+    self.minion = Minion(self.bg, self.side, character_name=name, sprite_name='b' if side else 'd') # sprite_name is the fallback char
     self.skills = []
     self.starting_minions = 101
     self.tactics = [tactic.stop, tactic.forward, tactic.backward, tactic.go_sides, tactic.go_center, tactic.attack_general, tactic.defend_general]
@@ -63,7 +63,7 @@ class General(Minion):
         return
       self.flag.dissapear()
     if self.bg.is_inside(x, y):
-      self.flag = effect.Blinking(self.bg, self.side, x, y, 'pock', self.original_color)
+      self.flag = effect.Blinking(self.bg, self.side, x, y, 'q', self.original_color) # Restore original 'q' character
     else:
       self.flag = None
 
@@ -103,21 +103,31 @@ class General(Minion):
   def update(self):
     if not self.alive:
       return
+
+    # First, call the inherited update from Entity to handle statuses and animations
     super(General, self).update()
+
+    # Then, update skills and swap cooldown
     for s in self.skills:
       s.update()
     self.swap_cd = min(self.swap_cd+1, self.swap_max_cd)
+
+    # Now, process actions if the timer is up
     if self.next_action <= 0:
       self.reset_action()
+      # General-specific logic: move towards flag or attack
       if self.flag and self.bg.is_inside(self.flag.x, self.flag.y):
         dx = self.flag.x - self.x
         dy = self.flag.y - self.y
-        if not self.move(math.copysign(1, dx) if dx else 0, math.copysign(1,dy) if dy else 0) \
-            or (self.x, self.y) == (self.flag.x, self.flag.y):
-          self.place_flag(-1, -1)
+        # Use copysign to move 1 step in the right direction
+        move_dx = math.copysign(1, dx) if dx != 0 else 0
+        move_dy = math.copysign(1, dy) if dy != 0 else 0
+        if not self.move(move_dx, move_dy) or (self.x, self.y) == (self.flag.x, self.flag.y):
+          self.place_flag(-1, -1) # Arrived or blocked, remove flag
       else:
+        # If no flag, try to attack like a minion
         if not self.try_attack():
-          self.next_action = -1
+          self.next_action = -1 # If nothing to do, wait
     else:
       self.next_action -= 1
       

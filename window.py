@@ -172,17 +172,30 @@ class Window(object):
 
   def render_all(self, x, y):
     self.renderer.clear()
-    self.renderer.draw_tile_grid()
     
-    # Draw the battleground entities
+    # Draw background tiles first
     for tile in self.bg.tiles.values():
-        if tile.entity:
-            if tile.entity.animation:
-                sprite = tile.entity.animation.get_current_sprite()
+        if not tile.entity and not tile.effects:
+             self.renderer.draw_text(tile.char, tile.x * TILE_SIZE + BG_OFFSET_X, tile.y * TILE_SIZE + BG_OFFSET_Y, tile.color)
+
+    # Draw entities and effects with priority
+    for tile in self.bg.tiles.values():
+        drawable = None
+        if tile.effects:
+            drawable = tile.effects[-1] # Draw top-most effect
+        elif tile.entity:
+            drawable = tile.entity
+        
+        if drawable:
+            if drawable.animation:
+                sprite = drawable.animation.get_current_sprite()
                 self.renderer.draw_sprite(sprite, tile.x, tile.y)
             else:
-                # Fallback to text rendering if no animation is available
-                self.renderer.draw_text(tile.entity.character_name, tile.x * 16 + BG_OFFSET_X, tile.y * 16 + BG_OFFSET_Y, tile.entity.color)
+                # Fallback to text rendering
+                char_to_draw = drawable.char if hasattr(drawable, 'char') else '?'
+                self.renderer.draw_text(char_to_draw, tile.x * TILE_SIZE + BG_OFFSET_X, tile.y * TILE_SIZE + BG_OFFSET_Y, drawable.color)
+        elif not drawable: # Redraw empty tile with hover color
+             self.renderer.draw_text(tile.char, tile.x * TILE_SIZE + BG_OFFSET_X, tile.y * TILE_SIZE + BG_OFFSET_Y, tile.color)
 
     self.render_panels()
     self.render_info(x, y)
@@ -193,6 +206,22 @@ class Window(object):
 
   def render_info(self, x, y):
     pass
+
+  def render_bar(self, x, y, w, h, value, max_value, bar_fg_color, bar_bg_color, text_color):
+    # Calculate bar width
+    ratio = 0
+    if max_value > 0:
+        ratio = int(w * (float(value) / max_value))
+
+    # Draw background
+    self.renderer.draw_rect(x, y, w, h, bar_bg_color)
+    # Draw foreground
+    if ratio > 0:
+        self.renderer.draw_rect(x, y, ratio, h, bar_fg_color)
+    
+    # Draw text
+    text = f"{int(value):02d}/{int(max_value):02d}"
+    self.renderer.draw_text(text, x + 5, y + 2, text_color)
 
   def render_msgs(self):
     y = MSG_OFFSET_Y

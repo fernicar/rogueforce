@@ -12,7 +12,9 @@ class Entity(object):
     self.y = y
     self.side = side
     self.sprite_name = sprite_name
-    self.character_name = character_name if character_name else sprite_name
+    self.char = sprite_name # The old 'char' is now the sprite_name
+    self.character_name = character_name if character_name else self.char
+    self.original_char = self.char # Keep original for reference
     self.original_sprite_name = sprite_name
     self.color = color
     self.original_color = color
