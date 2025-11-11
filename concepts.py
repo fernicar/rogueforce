@@ -14,7 +14,7 @@ class UIConcepts:
     HOVER_DEFAULT = (0, 0, 255)           # Blue for default hover states
     TILE_NEUTRAL = (50, 50, 150)          # Blue-grey for neutral tiles
 
-# Faction Identity Concepts  
+# Faction Identity Concepts
 class FactionConcepts:
     """Faction and unit identity concepts"""
     LEADER_DEFAULT = (255, 127, 0)        # Orange for generic leaders
@@ -24,7 +24,7 @@ class FactionConcepts:
     SAVIOURS_LEADER = (255, 0, 0)         # Red for Saviours faction
     MECHANICS_LEADER = (0, 128, 0)        # Dark Green for Mechanics faction
     DOTO_LEADER_DARK = (127, 0, 0)        # Darker Red for Doto faction (Bloodrotter)
-    DOTO_LEADER_MEDIUM = (128, 0, 0)      # Dark Red for Doto faction (Ox)  
+    DOTO_LEADER_MEDIUM = (128, 0, 0)      # Dark Red for Doto faction (Ox)
     DOTO_LEADER_LIGHT = (135, 206, 235)   # Sky Blue for Doto faction (Pock)
     DOTO_LEADER_PURE = (0, 255, 0)        # Green for Doto faction (Rubock)
     ENTITY_BASE = (255, 255, 255)         # White for base entity default
@@ -41,11 +41,11 @@ class StatusConcepts:
     PROGRESS_LIGHT = (135, 206, 235)      # Sky Blue for progress bars
     SELECTION_HIGHLIGHT = (255, 255, 255) # White for selected/highlighted items
 
-# Effect and Animation Concepts  
+# Effect and Animation Concepts
 class EffectConcepts:
     """Visual effects and animation concepts"""
     ATTACK_LIGHT = (255, 64, 64)          # Lighter Red for light attack effects
-    ATTACK_MEDIUM = (255, 128, 128)       # Light Red for medium attack effects  
+    ATTACK_MEDIUM = (255, 128, 128)       # Light Red for medium attack effects
     DAMAGE_IMPACT = (255, 0, 0)           # Red for damage indicators
     WAVE_MOVEMENT = (128, 128, 255)       # Light Blue for wave effects
     HIGHLIGHT = (255, 255, 255)           # White for highlighted effects

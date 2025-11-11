@@ -45,7 +45,7 @@ class AssetLoader:
                 # Return placeholder surface
                 size = int(32 * scale)
                 surface = pygame.Surface((size, size))
-                surface.fill((255, 0, 255))  # Magenta placeholder
+                surface.fill((255, 0, 255)) # Magenta placeholder
                 # Cache the placeholder too
                 self.sprite_cache[cache_key] = surface
                 return surface
@@ -100,7 +100,7 @@ class AssetLoader:
                 r, g, b = colorsys.hsv_to_rgb(h, s, v)
                 arr[x, y] = (int(r*255), int(g*255), int(b*255))
 
-        del arr  # Release pixel array
+        del arr # Release pixel array
         return surface
 
     def load_sound(self, path):

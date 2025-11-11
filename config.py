@@ -3,7 +3,7 @@ Global configuration for Rogue Force
 """
 
 # Development flags
-DEBUG = True  # Set to False for production
+DEBUG = True # Set to False for production
 
 # Display settings
 WINDOW_WIDTH = 1280+256-64
@@ -13,7 +13,7 @@ FPS = 60
 # Grid settings (logical game units)
 BG_WIDTH = 60
 BG_HEIGHT = 43
-TILE_SIZE = 16  # Pixels per tile
+TILE_SIZE = 16 # Pixels per tile
 
 # Asset paths
 ASSET_ROOT = 'assets'
@@ -27,8 +27,8 @@ MINION_SCALE = 0.04
 
 # UI Layout (in pixels)
 # These values are derived from the old tcod layout constants
-PANEL_WIDTH = 16  # Character width for side panels
-PANEL_PIXEL_WIDTH = PANEL_WIDTH * TILE_SIZE  # 16 * 16 = 256
+PANEL_WIDTH = 16 # Character width for side panels
+PANEL_PIXEL_WIDTH = PANEL_WIDTH * TILE_SIZE # 16 * 16 = 256
 BATTLEGROUND_PIXEL_WIDTH = BG_WIDTH * TILE_SIZE # 60 * 16 = 960
 BATTLEGROUND_PIXEL_HEIGHT = BG_HEIGHT * TILE_SIZE # 43 * 16 = 688
 

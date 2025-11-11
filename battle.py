@@ -1,3 +1,6 @@
+from __future__ import annotations
+from typing import Optional, List, Tuple, Any, TYPE_CHECKING
+from enum import Enum
 from area import SingleTarget
 from battleground import Battleground
 from general import *
@@ -6,10 +9,10 @@ from window import *
 from config import (
     WINDOW_WIDTH, WINDOW_HEIGHT, TILE_SIZE, DEBUG,
     PANEL_PIXEL_WIDTH, BATTLEGROUND_OFFSET, MSG_LOG_OFFSET, INFO_BAR_OFFSET, BG_WIDTH, BG_HEIGHT
-    
+
 )
 from concepts import (
-    STATUS_HEALTH_LOW, STATUS_HEALTH_MEDIUM, STATUS_PROGRESS_DARK, 
+    STATUS_HEALTH_LOW, STATUS_HEALTH_MEDIUM, STATUS_PROGRESS_DARK,
     STATUS_PROGRESS_LIGHT, UI_TEXT, UI_BACKGROUND,
 )
 
@@ -17,19 +20,30 @@ import copy
 import re
 import sys
 import pygame
-import random  # Import the random module
-from faction_data import ALL_GENERALS  # Import the generals list
+import random # Import the random module
+from faction_data import ALL_GENERALS # Import the generals list
 
-KEYMAP_SKILLS = "QWERTYUIOP"
-KEYMAP_SWAP = "123456789"
-KEYMAP_TACTICS = "ZXCVBNM"
+if TYPE_CHECKING:
+    from general import General
+    from entity import Entity
+
+class KeyMappings(Enum):
+    """Enumeration of key mappings for different game actions."""
+    SKILLS = "QWERTYUIOP"
+    SWAP = "123456789"
+    TACTICS = "ZXCVBNM"
+
+# Backward compatibility constants
+KEYMAP_SKILLS = KeyMappings.SKILLS.value
+KEYMAP_SWAP = KeyMappings.SWAP.value
+KEYMAP_TACTICS = KeyMappings.TACTICS.value
 
 FLAG_PATTERN = re.compile(r"flag \((-?\d+),(-?\d+)\)")
 SKILL_PATTERN = re.compile(r"skill(\d) \((-?\d+),(-?\d+)\)")
 
 
 class BattleWindow(Window):
-    def __init__(self, battleground, side, host=None, port=None, window_id=1):
+    def __init__(self, battleground: Battleground, side: int, host: Optional[str] = None, port: Optional[int] = None, window_id: int = 1) -> None:
         if DEBUG:
             sys.stdout.write("DEBUG: BattleWindow.__init__ started\n")
 
@@ -38,6 +52,16 @@ class BattleWindow(Window):
             battleground.generals[i].formation.place_minions()
             for g in battleground.reserves[i]:
                 g.start_battle()
+
+        # Initialize AI controller for computer-controlled general (opposite side)
+        ai_side = (side + 1) % 2
+        if not battleground.generals[ai_side].ai_controller:
+            from ai.ai_controller_optimized import AIController
+            battleground.generals[ai_side].ai_controller = AIController(battleground.generals[ai_side])
+
+        # DEBUG: Spam detection tracking
+        self.consecutive_flag_count = 0
+        self.last_flag_position = None
 
         self.keymap_skills = KEYMAP_SKILLS[0:len(battleground.generals[side].skills)]
         self.keymap_swap = KEYMAP_SWAP[0:len(battleground.reserves[side])]
@@ -51,11 +75,19 @@ class BattleWindow(Window):
         if DEBUG:
             sys.stdout.write("DEBUG: BattleWindow.__init__ completed\n")
 
-    def ai_action(self, turn):
+    def ai_action(self, turn: int) -> Any:
+        """Execute AI action for the opposing side.
+
+        Args:
+            turn: Current turn number
+
+        Returns:
+            AI action result
+        """
         ai_side = (self.side + 1) % 2
         return self.bg.generals[ai_side].ai_action(turn)
 
-    def check_input(self, keys, mouse, x, y):
+    def check_input(self, keys: Any, mouse: Tuple[bool, bool, bool], x: int, y: int) -> Optional[str]:
         # mouse[0] is left, mouse[1] is middle, mouse[2] is right
         if mouse[2]: # Right-click to place flag
             return "flag ({0},{1})\n".format(x, y)
@@ -82,7 +114,7 @@ class BattleWindow(Window):
                 mods = pygame.key.get_mods()
                 if mods & pygame.KMOD_SHIFT:
                     self.hover_function = self.bg.generals[self.side].skills[i].get_area_tiles
-                else:  # No shift, use the skill
+                else: # No shift, use the skill
                     self.hover_function = None
                     return "skill{0} ({1},{2})\n".format(i, x, y)
                 # Return None if we are only previewing so we don't send a network message
@@ -109,20 +141,21 @@ class BattleWindow(Window):
 
         return None
 
-    def check_winner(self):
+    def check_winner(self) -> Optional['General']:
         # TODO: detect draws
         for i in [0, 1]:
             if not self.bg.generals[i].alive:
+                winner_name = self.bg.generals[i].name or "Unknown"
                 self.message(
-                    self.bg.generals[i].name + ": " + self.bg.generals[i].death_quote,
+                    winner_name + ": " + self.bg.generals[i].death_quote,
                     self.bg.generals[i].original_color,
                 )
-                self.message(self.bg.generals[i].name + " is dead!", self.bg.generals[i].original_color)
+                self.message(winner_name + " is dead!", self.bg.generals[i].original_color)
                 self.game_over = True
                 return self.bg.generals[(i + 1) % 2]
         return None
 
-    def clean_all(self):
+    def clean_all(self) -> None:
         for e in copy.copy(self.bg.effects):
             if not e.alive:
                 self.bg.effects.remove(e)
@@ -130,7 +163,7 @@ class BattleWindow(Window):
             if not m.alive:
                 self.bg.minions.remove(m)
 
-    def process_messages(self, turn):
+    def process_messages(self, turn: int) -> None:
         for i in [0, 1]:
             if turn in self.messages[i]:
                 m = self.messages[i][turn]
@@ -151,21 +184,22 @@ class BattleWindow(Window):
                         match = SKILL_PATTERN.match(m)
                         if match:
                             if self.bg.generals[i].use_skill(*map(int, match.groups())):
+                                general_name = self.bg.generals[i].name or "Unknown"
                                 self.message(
-                                    self.bg.generals[i].name
+                                    general_name
                                     + ": "
                                     + self.bg.generals[i].skills[int(match.group(1))].quote,
                                     self.bg.generals[i].color,
                                 )
 
-    def render_panels(self):
+    def render_panels(self) -> None:
         """Draws the left and right UI panels."""
         # Left Panel (Side 0)
         self.render_side_panel(0)
         # Right Panel (Side 1)
         self.render_side_panel(1)
 
-    def render_side_panel(self, i):
+    def render_side_panel(self, i: int) -> None:
         """Renders a single side panel for the player or opponent."""
         g = self.bg.generals[i]
         is_player_side = (i == self.side)
@@ -174,7 +208,7 @@ class BattleWindow(Window):
         if i == 0: # Left panel
             x_offset = 10
         else: # Right panel
-            x_offset = BATTLEGROUND_OFFSET[0] + (60 * TILE_SIZE) + 10  # 60 is GRID_WIDTH
+            x_offset = BATTLEGROUND_OFFSET[0] + (60 * TILE_SIZE) + 10 # 60 is GRID_WIDTH
 
         y_offset = 20
         bar_length = PANEL_PIXEL_WIDTH - 20
@@ -195,7 +229,8 @@ class BattleWindow(Window):
             y_offset += 30
 
         # Minion Count
-        self.renderer.draw_text(f"{g.minions_alive} {g.minion.name}s", x_offset, y_offset, UI_TEXT)
+        minion_name = g.minion.name if g.minion else "minion"
+        self.renderer.draw_text(f"{g.minions_alive} {minion_name}s", x_offset, y_offset, UI_TEXT)
         y_offset += 30
 
         # Tactics
@@ -215,7 +250,7 @@ class BattleWindow(Window):
                 self.render_bar(x_offset, y_offset, bar_length, 15, g.swap_cd, g.swap_max_cd, STATUS_PROGRESS_DARK, STATUS_PROGRESS_LIGHT, UI_TEXT)
             y_offset += 30
 
-    def render_tactics(self, i, x_offset, y_offset, is_player_side):
+    def render_tactics(self, i: int, x_offset: int, y_offset: int, is_player_side: bool) -> int:
         """Renders the tactics list for a general."""
         tactic_keys = "ZXCVBNM"
         g = self.bg.generals[i]
@@ -228,34 +263,35 @@ class BattleWindow(Window):
             y_offset += 20
         return y_offset
 
-    def render_info(self, grid_x, grid_y):
+    def render_info(self, grid_x: int, grid_y: int) -> None:
         """Renders the info bar at the bottom and skill descriptions."""
         info_x, info_y = INFO_BAR_OFFSET
-        
+
         # Clear the info area
-        self.renderer.draw_rect(info_x, info_y - 5, 60 * TILE_SIZE, 60, UI_BACKGROUND)  # 60 is GRID_WIDTH
+        self.renderer.draw_rect(info_x, info_y - 5, 60 * TILE_SIZE, 60, UI_BACKGROUND) # 60 is GRID_WIDTH
 
         # Hovered tile entity info
         if self.bg.is_inside(grid_x, grid_y):
             entity = self.bg.tiles[(grid_x, grid_y)].entity
             if entity:
+                entity_name = entity.name or "Unknown"
                 if hasattr(entity, "hp"):
-                    text = f"{entity.name.capitalize()}: HP {entity.hp}/{entity.max_hp}, PW {entity.power}"
+                    text = f"{entity_name.capitalize()}: HP {entity.hp}/{entity.max_hp}, PW {entity.power}"
                     self.renderer.draw_text(text, info_x, info_y, entity.original_color)
                 else:
-                    self.renderer.draw_text(entity.name.capitalize(), info_x, info_y)
-            
+                    self.renderer.draw_text(entity_name.capitalize(), info_x, info_y)
+
             # Display coordinates
-            self.renderer.draw_text(f"{grid_x}/{grid_y}", info_x + (60 * TILE_SIZE) - 60, info_y)  # 60 is GRID_WIDTH
+            self.renderer.draw_text(f"{grid_x}/{grid_y}", info_x + (60 * TILE_SIZE) - 60, info_y) # 60 is GRID_WIDTH
 
         # Skill description from hovering over side panels
         mouse_x, mouse_y = pygame.mouse.get_pos()
         panel_index = -1
         if 0 < mouse_x < PANEL_PIXEL_WIDTH:
             panel_index = 0
-        elif BATTLEGROUND_OFFSET[0] + (60 * TILE_SIZE) < mouse_x < self.renderer.screen.get_width():  # 60 is GRID_WIDTH
+        elif BATTLEGROUND_OFFSET[0] + (60 * TILE_SIZE) < mouse_x < self.renderer.screen.get_width(): # 60 is GRID_WIDTH
             panel_index = 1
-        
+
         if panel_index != -1:
             g = self.bg.generals[panel_index]
             # Approximate Y check for skills area
@@ -267,10 +303,10 @@ class BattleWindow(Window):
                     skill = g.skills[skill_index]
                     self.renderer.draw_text(skill.description, info_x, info_y + 20, UI_TEXT)
 
-    def render_msgs(self):
+    def render_msgs(self) -> None:
         """Renders the message log."""
         msg_x, msg_y = MSG_LOG_OFFSET
-        
+
         # Clear the message area
         self.renderer.draw_rect(msg_x, 0, 60 * TILE_SIZE, BATTLEGROUND_OFFSET[1] - 5, UI_BACKGROUND)  # 60 is GRID_WIDTH
 

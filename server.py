@@ -4,8 +4,9 @@ import threading
 import time
 from datetime import datetime
 import os
+from typing import List
 
-# DEBUG = True  # Set to False to disable debug logging
+# DEBUG = True # Set to False to disable debug logging
 from config import DEBUG
 
 MSG_EXIT = "EXIT"
@@ -18,11 +19,11 @@ def debug_log(message, level="INFO"):
         print(f"[{timestamp}] [{level}] {message}")
 
 class Server(object):
-    def __init__(self, port1, port2):
+    def __init__(self, port1: int, port2: int) -> None:
         debug_log(f"Initializing server on ports {port1} and {port2}")
-        self.s = []
-        self.c = []
-        self.a = []
+        self.s: List[socket.socket] = []
+        self.c: List[socket.socket] = []
+        self.a: List[tuple] = []
         self.running = False
         self.shutdown_requested = False
         self._shutdown_lock = threading.Lock()
@@ -46,7 +47,7 @@ class Server(object):
         debug_log("Starting server threads and accepting connections")
         self.launch()
 
-    def close(self):
+    def close(self) -> None:
         # Prevent multiple calls to close()
         with self._shutdown_lock:
             if self._closing:
@@ -82,14 +83,14 @@ class Server(object):
         
         debug_log("Server shutdown completed")
 
-    def launch(self):
+    def launch(self) -> None:
         debug_log("Launching server - starting accept connections thread")
         self.running = True
         # Accept connections in separate threads to avoid blocking
         threading.Thread(target=self.accept_connections, name="AcceptThread").start()
         debug_log("Accept connections thread started")
 
-    def accept_connections(self):
+    def accept_connections(self) -> None:
         thread_name = threading.current_thread().name
         debug_log(f"Accept connections thread {thread_name} started")
         try:
@@ -137,7 +138,7 @@ class Server(object):
         finally:
             debug_log(f"Accept connections thread {thread_name} ending")
 
-    def listen(self, i):
+    def listen(self, i: int) -> None:
         thread_name = threading.current_thread().name
         debug_log(f"Listen thread {thread_name} started for client {i}")
         try:
@@ -220,7 +221,7 @@ if __name__ == "__main__":
         connection_count = 0
         while server.running:
             connection_count += 1
-            if connection_count % 10 == 0:  # Log every 10 iterations
+            if connection_count % 10 == 0: # Log every 10 iterations
                 debug_log(f"Server still running... (checked {connection_count} times)", "DEBUG")
             threading.Event().wait(1)
             

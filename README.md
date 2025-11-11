@@ -1,49 +1,113 @@
-Rogue Force
-===========
-Rogue Force is a reimagining of the Sega Saturn *Dragon Force* game set in space, now with a vibrant, sprite-based graphical style. The game is still in very early development with the focus put on the one on one battles, with a very crude version of the overworld view and other details for now. Not even the name is final.
+# Rogue Force
 
-What does it look like?
------------------------
-The original ASCII graphics have been replaced with a colorful, 16-bit inspired sprite system powered by Pygame. This allows for animated characters, visual effects, and a more modern presentation.
+Rogue Force is a tactical battle game inspired by the Sega Saturn classic *Dragon Force*, reimagined with 2D pixel art sprites and strategic turn-based combat. The project has been migrated from a terminal-based (tcod) engine to a graphical one using **Pygame**.
 
-How's the gameplay?
--------------------------
-Currently? A bit clumsy. All the input is given through the keyboard, with the mouse position being used for some skills. The graphical interface doesn't help new players that much at the moment, so the best way to know what is what is by trial and error.
+Development is focused on enhancing the core 1v1 battle system, with a functional AI opponent and network multiplayer support.
 
-Does it feature network play?
------------------------------
-Yeah, you can play against your friends. You only need to run your own copy of the server included and connect to it following some obscure and poorly documented protocol. It'll run flawlessly! (At least if the both of you have good PCs that are really near to the server.) Even then, the hardest part, by far, is finding someone to play against.
+## How's the Gameplay?
 
-How can I run it?
------------------
-You'll need to download all the files in this repository and install the requirements:
+The objective is to defeat the enemy general by reducing their HP to zero. Combat is a real-time-with-pause system where units act based on cooldowns and player commands. You control your general and issue commands to your army of minions.
 
+- **Style**: Turn-based tactical combat with real-time elements.
+- **Graphics**: 2D pixel art sprites.
+- **Controls**: Keyboard and mouse.
+
+## How to Run It
+
+You will need Python 3 and the Pygame library.
+
+1.  **Set up the environment:**
+    ```bash
+    # Create a virtual environment (optional but recommended)
     python3 -m venv env
-    source env/bin/activate
-    pip3 install -r requirements.txt
+    source env/bin/activate  # On Windows, use `env\Scripts\activate`
 
-After that, run `scenario.py` from the command line for the full experience or `battle.py` for a quick fight. The only one that supports network play at the moment is `battle.py`, you can try it with:
+    # Install requirements
+    pip install -r requirements.txt
+    ```
 
-    python3 battle.py [0|1] {address port}
+2.  **Run the game:**
+    -   **Single Player vs. AI:**
+        ```bash
+        # Play as the left side (Player 0)
+        python battle.py 0
 
-The first argument is the side on which you are playing (0 is left). The game features a dumb AI that does nothing, so you can try the game against it; just leave empty the last pair of parameters. If you want to play a networked game someone has to run the included server, `server.py`, as follows:
+        # Play as the right side (Player 1)
+        python battle.py 1
+        ```
+        Generals for both sides are chosen randomly at the start of each match.
 
-    python3 server.py port
+    -   **Network Multiplayer:**
+        Multiplayer requires one person to host a server.
+        1.  **Host runs the server:**
+            ```bash
+            # The server listens on the given port and the next one (e.g., 8888 and 8889)
+            python server.py 8888
+            ```
+        2.  **Player 1 (Left Side) connects:**
+            ```bash
+            python battle.py 0 <server_ip> 8888
+            ```
+        3.  **Player 2 (Right Side) connects:**
+            ```bash
+            python battle.py 1 <server_ip> 8889
+            ```
 
-It will launch a TCP server based on sockets on the port included and the next one (port+1). Then each player needs to connect to it in the proper order, first the one going in the port specified and then the other one. Here is an example of the workflow to play a single game of 60 seconds.
+## Controls
 
-    marce:~$ python3 server.py 8888
-    marce:~$ python3 battle.py 8888
-     sito:~$ python3 battle.py 8889
+-   **Mouse Movement**: Aims skills and provides hover-over info.
+-   **Right Mouse Click**: Place a flag on the battlefield. Your general will move towards it.
 
-To customize your experience, such as choosing different generals for each side, you'll to edit the last lines of `battle.py`; and remember to do it on both sides of the network if you want to play the same game. Maybe it's a bit cumbersome, but the `scenario.py` might support network play in the future too.
+### Skill & Tactic Management
+-   **Q, W, E, R, T, Y, U, I, O, P**: Use skills 1-10.
+-   **SHIFT + (Q, W, E...)**: Preview the area of effect for a skill without using it.
+-   **1-9**: Swap to a reserve general (when the swap cooldown is ready).
+-   **Z, X, C, V, B, N, M**: Select a tactic for your minions.
+-   **Spacebar**: Quickly switch between your current and previous tactic.
+-   **S**: Stop all current actions (clears your general's movement flag).
 
-Rogue Force will have ready to play packages for each major system in the future, but they're not provided yet.
+## Available Generals
 
-Can I help?
------------
+The game features several factions, each with unique generals possessing distinct skills and playstyles.
+
+### DOTO Faction
+| Sprite ID     | General         | Description               |
+|---------------|-----------------|---------------------------|
+| `pock`        | Pock            | A sky-blue wizard specializing in teleportation and magic orbs. |
+| `rubock`      | Rubock          | A green-robed telekinetic who can steal enemy spells. |
+| `bloodrotter` | Bloodrotter     | A fearsome warrior powered by blood, with rage-based mechanics. |
+| `ox`          | Ox              | A massive, bulky berserker who can taunt enemies and counter their attacks. |
+
+### WIZERDS Faction
+| Sprite ID     | General         | Description               |
+|---------------|-----------------|---------------------------|
+| `starcall`    | Starcall        | A cyan cosmic mage who wields the power of stars, lightning, and black holes. |
+
+### ORACLES Faction
+| Sprite ID     | General         | Description               |
+|---------------|-----------------|---------------------------|
+| `gemekaa`     | Gemekaa         | A mysterious crimson oracle who can foresee enemy movements and call down lightning. |
+
+### SAVIOURS Faction
+| Sprite ID     | General         | Description               |
+|---------------|-----------------|---------------------------|
+| `ares`        | Ares            | A heroic red warrior who excels at close-quarters combat with powerful slash attacks. |
+
+### MECHANICS Faction
+| Sprite ID     | General         | Description               |
+|---------------|-----------------|---------------------------|
+| `flappy`      | Flappy          | A goblin engineer in green overalls who uses mechanical contraptions and explosives. |
+
+## Can I help?
 Probably. I appreciate most kinds of help, from code to game ideas for new generals or gameplay. Feel free to open new issues, fork the code or anything else that you might fancy.
 
-License?
---------
-The project uses the free ISC license as you can check in the `LICENSE.txt` file. I really dislike the all caps legal text that goes with every single software license so I decided to strip it.
+**Acknowledgments**
+
+This project is a fork and modernization of the original *Rogue Force* game, created by **Marcelino Alberdi Pereira** and **Jose Eulogio Cribeiro Aneiros**. Their foundational work, developed between 2012-2013, provided the core mechanics and inspiration for this version.
+
+The original project is available on GitHub and is distributed under the permissive ISC license.
+
+*   **Original Repository**: [https://github.com/Alberdi/rogueforce](https://github.com/Alberdi/rogueforce)
+
+## License
+The project uses the free ISC license as you can check in the `LICENSE.txt` file.

@@ -284,7 +284,7 @@ pygame==2.5.2
         print("=" * 70)
 
         if not os.path.exists("requirements.txt"):
-            return True  # Already caught in file check
+            return True # Already caught in file check
 
         try:
             with open("requirements.txt", 'r', encoding='utf-8') as f:
@@ -305,14 +305,14 @@ pygame==2.5.2
             issue = "requirements.txt missing pygame dependency"
             self.log_issue(issue)
             print(f"\n❌ {issue}")
-            print(f"   Add 'pygame==2.5.2' to requirements.txt")
+            print(f"  Add 'pygame==2.5.2' to requirements.txt")
             return False
 
         if has_tcod:
             issue = "requirements.txt still contains tcod dependencies"
             self.log_issue(issue)
             print(f"\n❌ {issue}")
-            print(f"   Remove all tcod/libtcod entries from requirements.txt")
+            print(f"  Remove all tcod/libtcod entries from requirements.txt")
             return False
 
         print("\n✅ Dependencies are correct!")
